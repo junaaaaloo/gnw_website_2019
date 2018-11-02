@@ -1,0 +1,68 @@
+#navbar {
+    position: fixed;
+    top: 0px;
+    display: flex;
+    margin: 0px;
+    left: 0px;
+    z-index: 10;
+    color: var(--raisin-black);
+    right: 0px;
+    border-bottom: 1px solid var(--platinum);
+    height: 50px;
+    background: white;
+}
+
+#navbar .item {
+    font-size: 14px;
+    margin: 0px;
+    opacity: 0.8;
+    padding: 20px;
+    color: var(--raisin-black);
+    text-transform: uppercase;
+    font-stretch: condensed;
+    background-color: none;
+    border-radius: 0px;
+    font-family: "Istok Web";
+}
+
+#navbar .brand.image {
+    height: 50px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+#navbar .ui.nav.button {
+    width: 100%;
+    height: 100%;
+    font-size: 14px;
+    margin: 0px;
+    opacity: 0.8;
+    color: var(--raisin-black);
+    text-transform: uppercase;
+    font-stretch: condensed;
+    background-color: none;
+    border-radius: 0px;
+}
+
+#navbar .ui.nav.button {
+    color: black;
+    font-weight: normal;
+    border-radius: 0px;
+    background: none;
+}
+
+#navbar .ui.nav.button:hover {
+    font-weight: bolder;
+    text-shadow: 0.5px 0.5px var(--platinum);
+    color: var(--kombu-green);
+    background: none;
+    opacity: 0.9;
+    transition: 0.3s;
+}
+
+#navbar .item:hover,
+#navbar .item.active {
+    background: none;
+    font-weight: bolder;
+    opacity: 1;
+}

@@ -1,0 +1,32 @@
+tr.news-row:hover {
+	cursor: pointer;
+	background-color: #E5E7E9;
+}
+
+tr.admin-row:hover {
+	cursor: pointer;
+	background-color: #E5E7E9;
+}
+
+tr.reg-row:hover {
+	cursor: pointer;
+	background-color: #E5E7E9;
+}
+
+tr.sub-row:hover {
+	cursor: pointer;
+	background-color: #E5E7E9;
+}
+
+tr.payment-row:hover {
+	cursor: pointer;
+	background-color: #E5E7E9;
+}
+
+td.payment-pending {
+	background-color: #F5B7B1;
+}
+
+td.payment-none {
+	background-color: #B2BABB;
+}

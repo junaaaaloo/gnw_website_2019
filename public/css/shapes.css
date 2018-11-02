@@ -1,0 +1,89 @@
+/* SHAPES */
+.pent,.hex {
+	position: absolute;
+}
+
+.pent-dark-bot {
+	width: 180px;
+    top: 60vh;
+    left: 5vw;
+	-ms-transform: rotate(350deg);
+    -webkit-transform: rotate(350deg);
+    transform: rotate(350deg);
+}
+
+.pent-light-bot {
+	width: 130px;
+    top: 20vh;
+    left: 0vw;
+	-ms-transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+    transform: rotate(135deg);
+}
+
+.pent-mid-bot {
+	width: 80px;
+    top: 43vh;
+    left: 25vw;
+	-ms-transform: rotate(100deg);
+    -webkit-transform: rotate(100deg);
+    transform: rotate(100deg);
+}
+
+/*TOP*/
+
+.pent-dark-top {
+	width: 160px;
+    top: 5vh;
+    left: 38vw;
+	-ms-transform: rotate(40deg);
+    -webkit-transform: rotate(40deg);
+    transform: rotate(40deg);
+}
+
+.pent-light-top {
+	width: 120px;
+    top: 57vh;
+    left: 40vw;
+	-ms-transform: rotate(18deg);
+    -webkit-transform: rotate(18deg);
+    transform: rotate(18deg);
+}
+
+.pent-mid-top {
+	width: 80px;
+    top: 10vh;
+    left: 20vw;
+	-ms-transform: rotate(100deg);
+    -webkit-transform: rotate(100deg);
+    transform: rotate(100deg);
+}
+
+/* OUTLINE */
+
+.pent-outline-bot {
+	width: 130px;
+    top: 20vh;
+    left: 0vw;
+	-ms-transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+    transform: rotate(135deg);
+}
+
+.pent-outline-bot-1 {
+	width: 180px;
+    top: 60vh;
+    left: 5vw;
+	-ms-transform: rotate(350deg);
+    -webkit-transform: rotate(350deg);
+    transform: rotate(350deg);
+}
+
+.pent-outline-bot-3 {
+	width: 160px;
+    top: 5vh;
+    left: 38vw;
+	-ms-transform: rotate(40deg);
+    -webkit-transform: rotate(40deg);
+    transform: rotate(40deg);
+}

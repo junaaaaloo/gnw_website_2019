@@ -1,0 +1,39 @@
+h2.display-name {
+	color: #fff;
+	font-size: 18px;
+	font-family: 'Barlow', sans-serif;
+	letter-spacing: 1px;
+}
+
+nav.side-navbar {
+	width: 275px;
+}
+
+th.delete {
+	background-color: #EC7063;
+	color: #000;
+	text-align: center;
+}
+
+th.delete:hover {
+	cursor: pointer;
+	background-color: #E74C3C;
+}
+
+@media (max-width: 990px) {
+	input.name-form {
+		margin-bottom: 10px;
+	}
+}
+
+@media (max-width: 414px) and (min-width: 345px) {
+	table.table {
+		font-size: 10px!important;
+	}
+}
+
+@media (max-width: 344px) {
+	table.table {
+		font-size: 8px!important;
+	}
+}

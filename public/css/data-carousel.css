@@ -1,0 +1,50 @@
+div.date-item {
+	border: 1px solid #D0D3D4;
+	padding: 10px;
+	text-align: center;
+}
+
+div.date-item.chosen {
+	background-color: #85C1E9!important;
+}
+
+div.date-item:hover {
+	cursor: pointer;
+	background-color: #D0D3D4!important;
+}
+
+div.date-cont {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+span.date-title {
+	margin-bottom: 15px;
+	font-size: 16px!important;
+	color: #424242!important;
+}
+
+h4.h4-timeslot {
+	text-align: center;
+	font-weight: 700;
+	color: #909497;
+}
+
+div.slot-detail {
+	display: inline-block;
+}
+
+div.slot-num {
+	display: inline-block;
+	vertical-align: center;
+	text-align: right;
+}
+
+h5.date {
+	color: #707B7C!important;
+}
+
+h5.time {
+	font-size: 17px!important;
+	font-weight: 700;
+}

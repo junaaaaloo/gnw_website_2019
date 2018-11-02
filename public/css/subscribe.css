@@ -1,0 +1,142 @@
+body, html {
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    color: #f2f2f2;
+    background: url('../img/home-bg.jpg') no-repeat center center;
+    background-size: cover;
+}
+
+input.form-control {
+	font-family: 'Barlow', sans-serif!important;
+	border-radius: 0em!important;
+}
+
+div.header {
+	width: 100%;
+	color: #424242;
+}
+
+div.header:hover {
+	cursor: pointer;
+}
+
+div.main {
+	width: 100%;
+    height: 100%;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+}
+
+div.loginrow {
+	height: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+}
+
+div.sub-section, div.done-section {
+	height: auto;
+	background-color: #FFF;
+	border-radius: 0.2em;
+	padding: 20px;
+}
+
+img.star {
+	width: 100px;
+}
+
+h1.done-head {
+	font-size: 28px;
+	color: #58D68D;
+}
+
+h5.done-sub {
+	font-size: 21px;
+	color: #424242;
+	font-family: 'Barlow', sans-serif;
+}
+
+label.lbl {
+	color: #424242;
+}
+
+/*div.done-section {
+	display: none;
+}*/
+
+h3.sub-head {
+	font-family: 'Barlow', sans-serif;
+	font-size: 24px;
+	color: #7DCEA0;
+	letter-spacing: 2px;
+}
+
+span.sub-text {
+	color: #424242;
+	font-size: 18px;
+	letter-spacing: 1px;
+}
+
+span.verified {
+	color: #7DCEA0;
+	font-size: 18px;
+}
+
+span.notverified {
+	color: red;
+	font-size: 18px;
+}
+
+span.v-text {
+	font-family: 'Barlow', sans-serif;
+}
+
+@media (max-width: 575px) {
+	input.form-control {
+		margin-bottom: 10px;
+	}
+
+	div.sub-section, div.main {
+		margin: 60px 0px 25px 0px;
+	}
+}
+
+@media (min-width: 576px) and (max-width: 767px) {
+	/* SMALL */
+	input.form-control {
+		margin-bottom: 10px;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 991px){
+	/* MEDIUM */
+	input.form-control {
+		margin-bottom: 10px;
+	}
+}
+
+@media (min-width: 992px) and (max-width: 1200px){
+	#loginDiv, #forgotDiv {
+		width: 400px;
+	}
+}
+
+@media (min-width: 1200px){
+	#loginDiv, #forgotDiv {
+		width: 400px;
+	}
+}
