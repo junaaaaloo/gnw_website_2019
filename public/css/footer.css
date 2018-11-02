@@ -1,0 +1,12 @@
+.footer {
+    width: 100%;
+    color: white;
+    background: var(--raisin-black);
+    margin: 0 auto;
+    padding: 50px;
+    text-align: center;
+}
+
+.footer .all_rights_reserved {
+    font-size: 20px;
+}

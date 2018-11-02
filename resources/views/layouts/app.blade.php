@@ -36,6 +36,7 @@
     <!-- STYLES -->
     <link href="{{ asset('css/brand.css') }}" rel="stylesheet">
     <link href="{{ asset('css/navbar.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/footer.css') }}" rel="stylesheet">
     @yield('styles')
 </head>
 <body>
@@ -52,7 +53,7 @@
             CONTACT US
         </a>
         <div class="right menu">
-            <a id = "login" class="nav item">
+            <a id = "login" class="login-button nav item">
                 LOGIN
             </a>
             <a href="{{ route('register') }}" class="{{ $context == 'register' ? 'active' : '' }} nav item">
@@ -86,6 +87,10 @@
     </nav>
     <div id="content"> 
         @yield('content')
+        <div class = "footer">
+            <img src="{{asset('img/all_logos.png')}}" width = "300px">
+            <div class = "all_rights_reserved"> Green & White © All Rights Reserved 2018 </div>
+        </div>
     </div>
     
     <!-- SCRIPTS -->

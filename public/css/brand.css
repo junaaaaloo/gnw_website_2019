@@ -26,6 +26,32 @@ h1, h2, h3, h4, h5, h6 {
     font-family: "Barlow" !important;
 }
 
+.brand.action {
+    font-size: 16px;
+    font-family: "Barlow" !important;
+}
+
+a.brand.link {
+    font-size: 20px;
+    transition: 0.4s;
+    color: var(--light-moss-green)
+}
+
+a.brand.link:hover {
+    color: white;
+    font-weight: bolder;
+}
+
+a.brand.link.inverted:hover {
+    color: var(--raisin-black);
+    font-weight: bolder;
+}
+
+a.brand.link.inverted {
+    color: var(--kombu-green);
+}
+
+
 #background {
     position: fixed;
     z-index: 0;
@@ -33,6 +59,8 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     left: 0;
     top: 0;
+    margin: 0;
+    padding: 0;
 }
 
 #overlay {
@@ -42,10 +70,14 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     left: 0;
     top: 0;
+    margin: 0;
+    padding: 0;
     opacity: 0.5;
 }
 
 #content {
+    margin: 0;
+    padding: 0;
     margin-top: 50px;
     z-index: 2;
     background: transparent;
@@ -54,4 +86,63 @@ h1, h2, h3, h4, h5, h6 {
     left: 0;
     top: 0;
 }
+
+.brand.slide .background {
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 0;
+    position: absolute;
+}
+
+.brand.slide .overlay {
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+    position: absolute;
+}
+
+
+.flex-center {
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.brand.slide {
+    position: relative;
+    display: block;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    min-width: 100vw;
+    height: 100vh;
+}
+
+.brand.slide:first-child {
+    height: calc(100vh - 50px);
+}
+
+.brand.slide .content {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
 

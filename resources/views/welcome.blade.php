@@ -6,78 +6,167 @@
 
 @section('styles')
     <style>
-        .brand.slide .background {
-            height: 100%;
-            width: 100%;
-            top: 0;
-            left: 0;
-            margin: 0;
-            padding: 0;
-            z-index: 0;
-            position: absolute;
+        #title {
+            padding: 30px;
+            background: var(--kombu-green);
+            flex-direction: column;
+            border-radius: 3px;
+        }
+        
+        #part_of_gnw {
+            height: auto;
+            padding: 50px 0px;
         }
 
-        .flex-center {
+        #part_of_gnw .background {
+            background: var(--kombu-green)
+        }
+
+        #title .brand.action {
+            width: 100%;
+            margin: 5px 0px;
+        }
+
+        #steps {
+            height: auto;
+            padding: 50px 0px;
+        }
+        
+        #steps .steps_container {
+            padding: 0px 100px;
+        }
+
+        .step {
             display: flex;
-            justify-content: center;
             align-items: center;
+            margin: 0px 20px;
         }
 
-        .brand.slide {
-            position: relative;
-            display: block;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            width: 100vw;
-            height: 100vh;
+        .step img {
+            width: 120px;
         }
 
-        .brand.slide .content {
-            height: 100%;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            top: 0;
-            left: 0;
-            z-index: 1;
-            position: absolute;
+        .step .image {
+            margin: 20px;
         }
 
+        .step .title {
+            text-align: left;
+            font-size: 30px;
+        }
+
+        .step .message {
+            text-align: left;
+            font-size: 20px;
+        }
     </style>
 @endsection
 
 @section('content') 
-    <div class = "brand slide">
-        <div class = "background" id = "particles"> </div>
-        <div class = "content flex-center"> 
-            <h2>
-                <span style="color: var(--gwgreen)"> GREEN </span> 
-                <span style="background: linear-gradient(98deg, var(--gwgreen) 0%, black 70%);
-                            -webkit-background-clip: text;
-                            -webkit-text-fill-color: transparent;">&</span>
-                WHITE<br>
-            <h2>
-            <h1>
-                <span style="font-size: 40px; letter-spacing: 0px; line-height: 40px"> CAPTURING IMAGES OF <br> <span style="color: var(--gwgreen)"> LASALLIAN EXCELLENCE </span> </span>
-            </h1>
+<div class = "brand slide">
+    <div class = "background" id = "particles"> </div>
+    <div class = "overlay"> </div>
+    <div class = "content flex-center flex-column"> 
+        <div id="title">
+              <img src="{{ asset('img/white-logo-compact.png')}}" width=200px>
+              <h1 class = "ui inverted header">
+                  <span style="font-size: 40px; letter-spacing: 0px; line-height: 40px"> CAPTURING IMAGES OF <br> <span style="color: var(--gwgreen)"> LASALLIAN EXCELLENCE </span> </span>
+              </h1>
+              <h3 class = "ui inverted header">
+                  The official yearbook publication of De La Salle University.
+              </h3>
+              <div class = "ui basic segment">
+                  <button class = "ui login-button brand action white button">
+                      LOGIN
+                  </button>
+                  <a href="{{ route('register') }}" class = "ui brand action green button">
+                      BE A SUBSCRIBER
+                  </a>
+              </div>
+              
         </div>
     </div>
-    <div class = "brand slide">
-        <div class = "background" id = "particles"> </div>
-        <div class = "content flex-center"> 
-            <h2>
-                <span style="color: var(--gwgreen)"> GREEN </span> 
-                <span style="background: linear-gradient(98deg, var(--gwgreen) 0%, black 70%);
-                            -webkit-background-clip: text;
-                            -webkit-text-fill-color: transparent;">&</span>
-                WHITE<br>
-            <h2>
-            <h1>
-                <span style="font-size: 40px; letter-spacing: 0px; line-height: 40px"> CAPTURING IMAGES OF <br> <span style="color: var(--gwgreen)"> LASALLIAN EXCELLENCE </span> </span>
-            </h1>
+</div>
+<div class = "brand slide" id = "part_of_gnw">
+    <div class = "background"> </div>
+    <div class = "overlay"> </div>
+    <div class = "content flex-center flex-column"> 
+        <h1 class = "ui inverted header">
+            <span style="font-size: 40px; letter-spacing: 0px; line-height: 40px"> 
+                Be a <span style="color: var(--gwgreen)">part</span> of the <br> <span style="color: var(--gwgreen)"> Green </span> 
+                <span style="background: linear-gradient(98deg, var(--gwgreen) 0%, white 70%);
+                              -webkit-background-clip: text;
+                              -webkit-text-fill-color: transparent;">&</span>
+                White Yearbook <br>
+                Join the Journey!
+            </span>
+        </h1>
+    </div>
+</div>
+<div class = "brand slide" id = "steps">
+    <div class = "background"> </div>
+    <div class = "overlay"> </div>
+    <div class = "content flex-center flex-column"> 
+        <div class = "steps_container">
+            <div class="step"> 
+                <div class="image"> 
+                    <img src = "{{asset('img/steps/1.png')}}">
+                </div>
+                <div class="content">
+                    <h1 class = "title"> Registration </h1>
+                    <p class = "message"> 
+                        Initial process for becoming a subscriber of Green & White, the official DLSU Yearbook. 
+                        <a href = "{{ route('register') }}" class = "brand link inverted"> Click here to register. </a>
+                    </p>
+                </div>
+            </div>
+            <div class="step"> 
+                <div class="image"> 
+                    <img src = "{{asset('img/steps/2.png')}}"> 
+                </div>
+                <div class="content">
+                    <h1 class = "title"> Settling of Accounts </h1>
+                    <p class = "message"> 
+                    Paying your Green & White fees in order to settle your accounts and avoid further issues that may arise.
+                    </p>
+                </div>
+            </div>
+            <div class="step"> 
+                <div class="image"> 
+                    <img src = "{{asset('img/steps/3.png')}}"> 
+                </div>
+                <div class="content">
+                    <h1 class = "title"> Pictorial </h1>
+                    <p class = "message"> 
+                    Choose from the different timeslots offered to you depending on your college. After Scheduling your Graduation Pictorial and being present on the assigned date to have your photos taken
+                    </p>
+                </div>
+            </div>
+            <div class="step"> 
+                <div class="image"> 
+                    <img src = "{{asset('img/steps/4.png')}}"> 
+                </div>
+                <div class="content">
+                    <h1 class = "title"> Claiming of Photos </h1>
+                    <p class = "message"> 
+                    Once the printing of all subscriber's photos, you may claim them on release.
+                    </p>
+                </div>
+            </div>
+            <div class="step"> 
+                <div class="image"> 
+                    <img src = "{{asset('img/steps/5.png')}}"> 
+                </div>
+                <div class="content">
+                    <h1 class = "title"> Claiming of Yearbook </h1>
+                    <p class = "message"> 
+                    After a year-long process for the Green & White, wait for your yearbook to be delivered to said delivery addresses of our subscribers
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -190,5 +279,6 @@ var config = {
 }
 
 particlesJS("particles", config)
+requestAnimationFrame();
 </script>
 @endsection
