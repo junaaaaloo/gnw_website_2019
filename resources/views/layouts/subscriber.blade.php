@@ -5,13 +5,16 @@
 @endsection
 
 @section('styles')
+<link href="{{asset('css/sidebar.css')}}" rel="stylesheet">
 @yield('styles')
 @endsection
 
 @section('content')
 
 
-
+<nav class = "sidebar">
+    
+</nav>
 
 <nav class="side-navbar">
     <div class="side-navbar-wrapper">
