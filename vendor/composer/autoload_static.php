@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb
+class ComposerStaticInit463dcb3890a267710881d841d6969a3c
 {
     public static $files = array (
         '1d1b89d124cc9cb8219922c9d5569199' => __DIR__ . '/..' . '/hamcrest/hamcrest-php/hamcrest/Hamcrest.php',
@@ -330,6 +330,7 @@ class ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb
         'App\\Http\\Controllers\\ManageSubscribersController' => __DIR__ . '/../..' . '/app/Http/Controllers/ManageSubscribersController.php',
         'App\\Http\\Controllers\\PasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/PasswordController.php',
         'App\\Http\\Controllers\\PaymentController' => __DIR__ . '/../..' . '/app/Http/Controllers/PaymentController.php',
+        'App\\Http\\Controllers\\SchedPictorialController' => __DIR__ . '/../..' . '/app/Http/Controllers/SchedPictorialController.php',
         'App\\Http\\Controllers\\StartController' => __DIR__ . '/../..' . '/app/Http/Controllers/StartController.php',
         'App\\Http\\Controllers\\SurveyController' => __DIR__ . '/../..' . '/app/Http/Controllers/SurveyController.php',
         'App\\Http\\Controllers\\WriteUpController' => __DIR__ . '/../..' . '/app/Http/Controllers/WriteUpController.php',
@@ -348,9 +349,12 @@ class ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb
         'App\\Providers\\EventServiceProvider' => __DIR__ . '/../..' . '/app/Providers/EventServiceProvider.php',
         'App\\Providers\\RouteServiceProvider' => __DIR__ . '/../..' . '/app/Providers/RouteServiceProvider.php',
         'App\\RegisteredIds' => __DIR__ . '/../..' . '/app/RegisteredIds.php',
+        'App\\Reservation' => __DIR__ . '/../..' . '/app/Reservation.php',
         'App\\Role' => __DIR__ . '/../..' . '/app/Role.php',
+        'App\\SchedDate' => __DIR__ . '/../..' . '/app/SchedDate.php',
         'App\\Subscriber' => __DIR__ . '/../..' . '/app/Subscriber.php',
         'App\\Survey' => __DIR__ . '/../..' . '/app/Survey.php',
+        'App\\Timeslot' => __DIR__ . '/../..' . '/app/Timeslot.php',
         'App\\User' => __DIR__ . '/../..' . '/app/User.php',
         'Carbon\\Carbon' => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon/Carbon.php',
         'Carbon\\CarbonInterval' => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon/CarbonInterval.php',
@@ -3629,10 +3633,10 @@ class ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInitdf456c3cebf879a7cb91201cdae5a0cb::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit463dcb3890a267710881d841d6969a3c::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit463dcb3890a267710881d841d6969a3c::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInit463dcb3890a267710881d841d6969a3c::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInit463dcb3890a267710881d841d6969a3c::$classMap;
 
         }, null, ClassLoader::class);
     }
