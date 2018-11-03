@@ -12,15 +12,23 @@
     background: white;
 }
 
-#navbar .item {
-    font-size: 14px;
+#navbar form.item,
+#navbar > .item {
+    padding: 10px 6px;
     margin: 0px;
+}
+
+#navbar > .item,
+#navbar .item > button  {
+    font-size: 14px;
+    line-height: 14px;
     opacity: 0.8;
-    padding: 20px;
+    cursor: pointer;
+    border: none;
     color: var(--raisin-black);
     text-transform: uppercase;
     font-stretch: condensed;
-    background-color: none;
+    background: none;
     border-radius: 0px;
     font-family: "Istok Web";
 }
@@ -61,6 +69,7 @@
 }
 
 #navbar .item:hover,
+#navbar form.item button:hover,
 #navbar .item.active {
     background: none;
     font-weight: bolder;
@@ -75,6 +84,11 @@
 }
 
 @media only screen and (max-width: 767px) {
+    #navbar .labeled.item i,
+    #navbar .labeled.item > button i {
+        display: none;
+    }
+
     #navbar .hamburger_menu {
         display: block;
         height: 50px;

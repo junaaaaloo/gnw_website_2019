@@ -86,6 +86,7 @@ a.brand.link.inverted {
     background: transparent;
     position: absolute;
     width: 100%;
+    height: auto;
     left: 0;
     top: 0;
 }

@@ -4,7 +4,7 @@
     <!-- METADATA -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title> Green &amp; White </title>
 
@@ -42,7 +42,7 @@
 <body>
     <div id="background"> </div>
     <div id="overlay"> </div>
-    <nav id="navbar" class="ui stackable secondary menu">
+    <nav id="navbar" class="ui labeled stackable secondary menu">
         <div>
             <a class = "hamburger_menu brand link inverted">
                 <i class="icon bars"> </i>
@@ -58,20 +58,42 @@
             <a href= "{{ route('contact') }}" class="{{ $context == 'contact' ? 'active' : '' }} nav item">
                 CONTACT
             </a>
+
+            @if(!Auth::user())
             <a id = "login" class="login-button nav item">
                 LOGIN
             </a>
             <a href="{{ route('register') }}" class="{{ $context == 'register' ? 'active' : '' }} nav item">
                 SUBSCRIBE
             </a>
+            @else
+            <a href="{{ route('home') }}" class="{{ $context == 'subscriber-home' ? 'active' : '' }}  nav labeled item">
+                <i class="icon home layout"> </i>
+                HOME
+            </a>
+            <!-- TO DO -->
+            <a href="{{ route('home') }}" class="nav labeled item">
+                <i class="icon lock layout"> </i>
+                CHANGE PASSWORD
+            </a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" class = "nav labeled item">
+                <button type = "submit"> 
+                    <i class="icon  layout sign out alternate"></i>
+                    LOGOUT 
+                </button>
+                {{ csrf_field() }}
+            </form>
+            @endif
+
         </div>
-        <div id = "login_modal" class="ui mini modal">
+        <div id = "login_modal" class="ui  mini modal">
             <div class = "icon header">                       
                 <img src="{{ asset('favicon/favicon-16x16.png')}}">
                 SUBSCRIBER'S LOGIN
             </div>
             <div class="content">
-                <form class="ui large form">
+                <form method="POST" action="{{ route('login') }}" class="ui large form">
+                    {{ csrf_field() }}
                     <div class = "wide field">
                         <label> ID Number </label>
                         <input type="number" placeholder="e.g. 11526785">
@@ -81,11 +103,16 @@
                         <input type="password" placeholder="Password">
                     </div>
 
-                    <a href = "forgot-password">
+                    <a class = "brand link inverted" href="{{ route('password.request') }}">
                         Forgot Password? 
                     </a>
                     <br>
                     <button type="submit" id = "login_submit" class="ui green button"> LOGIN </button>
+                    @if ($errors->any())
+                        <div class="ui red message" role="alert">
+                            Wrong Credentials
+                        </div>
+                    @endif
                 </form>
             </div>
         </div>
@@ -111,8 +138,13 @@
     
     <!-- SCRIPTS -->
     <script src="{{ asset('js/index.js') }}"></script>
-    <script src="{{ asset('js/login.js') }}"></script>
     <script src="{{ asset('js/navbar.js') }}"></script>
+    <script>
+        let has_login_error = "{{$errors->any()?'true':'false'}}"
+        if (has_login_error === "true") {
+            $('#login_modal').modal('show');
+        }
+    </script>
     @yield('scripts')
 </body>
 </html>

@@ -1,5 +1,5 @@
 /*!
- * # Semantic UI 2.3.2 - Dropdown
+ * # Semantic UI 2.6.3 - Dropdown
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -64,6 +64,7 @@ $.fn.dropdown = function(parameters) {
         $sizer          = $module.find(selector.sizer),
         $input          = $module.find(selector.input),
         $icon           = $module.find(selector.icon),
+        $clear          = $module.find(selector.clearIcon),
 
         $combo = ($module.prev().find(selector.text).length > 0)
           ? $module.prev().find(selector.text)
@@ -71,6 +72,7 @@ $.fn.dropdown = function(parameters) {
 
         $menu           = $module.children(selector.menu),
         $item           = $menu.find(selector.item),
+        $divider        = settings.hideDividers ? $item.parent().children(selector.divider) : $(),
 
         activated       = false,
         itemActivated   = false,
@@ -321,6 +323,13 @@ $.fn.dropdown = function(parameters) {
             if( !module.has.menu() ) {
               module.create.menu();
             }
+            if ( module.is.selection() && module.is.clearable() && !module.has.clearItem() ) {
+              module.verbose('Adding clear icon');
+              $clear = $('<i />')
+                .addClass('remove icon')
+                .insertBefore($text)
+              ;
+            }
             if( module.is.search() && !module.has.search() ) {
               module.verbose('Adding search input');
               $search = $('<input />')
@@ -384,7 +393,8 @@ $.fn.dropdown = function(parameters) {
           },
           menu: function(values) {
             $menu.html( templates.menu(values, fields));
-            $item = $menu.find(selector.item);
+            $item    = $menu.find(selector.item);
+            $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
           },
           reference: function() {
             module.debug('Dropdown behavior was called on select, replacing with closest dropdown');
@@ -411,7 +421,8 @@ $.fn.dropdown = function(parameters) {
         },
 
         refreshItems: function() {
-          $item = $menu.find(selector.item);
+          $item    = $menu.find(selector.item);
+          $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
         },
 
         refreshSelectors: function() {
@@ -426,6 +437,7 @@ $.fn.dropdown = function(parameters) {
           ;
           $menu    = $module.children(selector.menu);
           $item    = $menu.find(selector.item);
+          $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
         },
 
         refreshData: function() {
@@ -481,7 +493,7 @@ $.fn.dropdown = function(parameters) {
                 if( module.can.click() ) {
                   module.bind.intent();
                 }
-                if(module.has.menuSearch()) {
+                if(module.has.search()) {
                   module.focusSearch();
                 }
                 module.set.visible();
@@ -501,6 +513,10 @@ $.fn.dropdown = function(parameters) {
             if(settings.onHide.call(element) !== false) {
               module.animate.hide(function() {
                 module.remove.visible();
+                // hidding search focus
+                if ( module.is.focusedOnSearch() ) {
+                  $search.blur();
+                }
                 callback.call(element);
               });
             }
@@ -591,6 +607,7 @@ $.fn.dropdown = function(parameters) {
                 .on('mousedown' + eventNamespace, selector.menu,   module.event.menu.mousedown)
                 .on('mouseup'   + eventNamespace, selector.menu,   module.event.menu.mouseup)
                 .on('click'     + eventNamespace, selector.icon,   module.event.icon.click)
+                .on('click'     + eventNamespace, selector.clearIcon, module.event.clearIcon.click)
                 .on('focus'     + eventNamespace, selector.search, module.event.search.focus)
                 .on('click'     + eventNamespace, selector.search, module.event.search.focus)
                 .on('blur'      + eventNamespace, selector.search, module.event.search.blur)
@@ -624,6 +641,7 @@ $.fn.dropdown = function(parameters) {
                 .on('mousedown' + eventNamespace, module.event.mousedown)
                 .on('mouseup'   + eventNamespace, module.event.mouseup)
                 .on('focus'     + eventNamespace, module.event.focus)
+                .on('click'     + eventNamespace, selector.clearIcon, module.event.clearIcon.click)
               ;
               if(module.has.menuSearch() ) {
                 $module
@@ -843,6 +861,30 @@ $.fn.dropdown = function(parameters) {
               .addClass(className.filtered)
             ;
           }
+
+          if(!module.has.query()) {
+            $divider
+              .removeClass(className.hidden);
+          } else if(settings.hideDividers === true) {
+            $divider
+              .addClass(className.hidden);
+          } else if(settings.hideDividers === 'empty') {
+            $divider
+              .removeClass(className.hidden)
+              .filter(function() {
+                // First find the last divider in this divider group
+                // Dividers which are direct siblings are considered a group
+                var lastDivider = $(this).nextUntil(selector.item);
+
+                return (lastDivider.length ? lastDivider : $(this))
+                // Count all non-filtered items until the next divider (or end of the dropdown)
+                  .nextUntil(selector.divider)
+                  .filter(selector.item + ":not(." + className.filtered + ")")
+                  // Hide divider if no items are found
+                  .length === 0;
+              })
+              .addClass(className.hidden);
+          }
         },
 
         fuzzySearch: function(query, term) {
@@ -897,6 +939,12 @@ $.fn.dropdown = function(parameters) {
             else {
               $search.focus();
             }
+          }
+        },
+
+        blurSearch: function() {
+          if( module.has.search() ) {
+            $search.blur();
           }
         },
 
@@ -1017,9 +1065,27 @@ $.fn.dropdown = function(parameters) {
               willRefocus = false;
             }
           },
+          clearIcon: {
+            click: function(event) {
+              module.clear();
+              if(module.is.searchSelection()) {
+                module.remove.searchTerm();
+              }
+              module.hide();
+              event.stopPropagation();
+            }
+          },
           icon: {
             click: function(event) {
-              module.toggle();
+              if(module.has.search()) {
+                if(!module.is.active()) {
+                  module.focusSearch();
+                } else {
+                  module.blurSearch();
+                }
+              } else {
+                module.toggle();
+              }
             }
           },
           text: {
@@ -1110,16 +1176,7 @@ $.fn.dropdown = function(parameters) {
           select: {
             mutation: function(mutations) {
               module.debug('<select> modified, recreating menu');
-              var
-                isSelectMutation = false
-              ;
-              $.each(mutations, function(index, mutation) {
-                if($(mutation.target).is('select') || $(mutation.addedNodes).is('select')) {
-                  isSelectMutation = true;
-                  return true;
-                }
-              });
-              if(isSelectMutation) {
+              if(module.is.selectMutation(mutations)) {
                 module.disconnect.selectObserver();
                 module.refresh();
                 module.setup.select();
@@ -1392,6 +1449,9 @@ $.fn.dropdown = function(parameters) {
                     module.event.item.click.call($selectedItem, event);
                     if(module.is.searchSelection()) {
                       module.remove.searchTerm();
+                      if(module.is.multiple()) {
+                          $search.focus();
+                      }
                     }
                   }
                   event.preventDefault();
@@ -1646,7 +1706,7 @@ $.fn.dropdown = function(parameters) {
           },
 
           hide: function(text, value, element) {
-            module.set.value(value, text);
+            module.set.value(value, text, $(element));
             module.hideAndClear();
           }
 
@@ -1873,12 +1933,23 @@ $.fn.dropdown = function(parameters) {
               select.placeholder = settings.placeholder;
             }
             if(settings.sortSelect) {
-              select.values.sort(function(a, b) {
-                return (a.name > b.name)
-                  ? 1
-                  : -1
-                ;
-              });
+              if(settings.sortSelect === true) {
+                select.values.sort(function(a, b) {
+                  return (a.name > b.name)
+                    ? 1
+                    : -1
+                    ;
+                });
+              } else if(settings.sortSelect === 'natural') {
+                select.values.sort(function(a, b) {
+                  return (a.name.toLowerCase() > b.name.toLowerCase())
+                    ? 1
+                    : -1
+                    ;
+                });
+              } else if($.isFunction(settings.sortSelect)) {
+                select.values.sort(settings.sortSelect);
+              }
               module.debug('Retrieved and sorted values from select', select);
             }
             else {
@@ -1946,7 +2017,7 @@ $.fn.dropdown = function(parameters) {
                     return;
                   }
                   if(isMultiple) {
-                    if($.inArray( String(optionValue), value) !== -1 || $.inArray(optionText, value) !== -1) {
+                    if($.inArray( String(optionValue), value) !== -1) {
                       $selectedItem = ($selectedItem)
                         ? $selectedItem.add($choice)
                         : $choice
@@ -1955,13 +2026,13 @@ $.fn.dropdown = function(parameters) {
                   }
                   else if(strict) {
                     module.verbose('Ambiguous dropdown value using strict type check', $choice, value);
-                    if( optionValue === value || optionText === value) {
+                    if( optionValue === value) {
                       $selectedItem = $choice;
                       return true;
                     }
                   }
                   else {
-                    if( String(optionValue) == String(value) || optionText == value) {
+                    if( String(optionValue) == String(value)) {
                       module.verbose('Found select item by value', optionValue, value);
                       $selectedItem = $choice;
                       return true;
@@ -2337,30 +2408,28 @@ $.fn.dropdown = function(parameters) {
             }
           },
           text: function(text) {
-            if(settings.action !== 'select') {
-              if(settings.action == 'combo') {
-                module.debug('Changing combo button text', text, $combo);
-                if(settings.preserveHTML) {
-                  $combo.html(text);
-                }
-                else {
-                  $combo.text(text);
-                }
+            if(settings.action === 'combo') {
+              module.debug('Changing combo button text', text, $combo);
+              if(settings.preserveHTML) {
+                $combo.html(text);
               }
               else {
-                if(text !== module.get.placeholderText()) {
-                  $text.removeClass(className.placeholder);
-                }
-                module.debug('Changing text', text, $text);
-                $text
-                  .removeClass(className.filtered)
-                ;
-                if(settings.preserveHTML) {
-                  $text.html(text);
-                }
-                else {
-                  $text.text(text);
-                }
+                $combo.text(text);
+              }
+            }
+            else if(settings.action === 'activate') {
+              if(text !== module.get.placeholderText()) {
+                $text.removeClass(className.placeholder);
+              }
+              module.debug('Changing text', text, $text);
+              $text
+                .removeClass(className.filtered)
+              ;
+              if(settings.preserveHTML) {
+                $text.html(text);
+              }
+              else {
+                $text.text(text);
               }
             }
           },
@@ -2576,7 +2645,7 @@ $.fn.dropdown = function(parameters) {
                 }
               })
             ;
-          }
+          },
         },
 
         add: {
@@ -2774,7 +2843,7 @@ $.fn.dropdown = function(parameters) {
             }
             module.set.value(newValue, addedValue, addedText, $selectedItem);
             module.check.maxSelections();
-          }
+          },
         },
 
         remove: {
@@ -2816,6 +2885,9 @@ $.fn.dropdown = function(parameters) {
             }
             else {
               $item.removeClass(className.filtered);
+            }
+            if(settings.hideDividers) {
+              $divider.removeClass(className.hidden);
             }
             module.remove.empty();
           },
@@ -2999,12 +3071,15 @@ $.fn.dropdown = function(parameters) {
                 .removeAttr('tabindex')
               ;
             }
-          }
+          },
         },
 
         has: {
           menuSearch: function() {
             return (module.has.search() && $search.closest($menu).length > 0);
+          },
+          clearItem: function() {
+            return ($clear.length > 0);
           },
           search: function() {
             return ($search.length > 0);
@@ -3140,6 +3215,9 @@ $.fn.dropdown = function(parameters) {
             var $selectedMenu = $subMenu || $menu;
             return $selectedMenu.hasClass(className.leftward);
           },
+          clearable: function() {
+            return ($module.hasClass(className.clearable) || settings.clearable);
+          },
           disabled: function() {
             return $module.hasClass(className.disabled);
           },
@@ -3184,9 +3262,9 @@ $.fn.dropdown = function(parameters) {
               selectChanged = false
             ;
             $.each(mutations, function(index, mutation) {
-              if(mutation.target && $(mutation.target).is('select')) {
+              if($(mutation.target).is('select') || $(mutation.addedNodes).is('select')) {
                 selectChanged = true;
-                return true;
+                return false;
               }
             });
             return selectChanged;
@@ -3686,6 +3764,8 @@ $.fn.dropdown.settings = {
 
   values                 : false,      // specify values to use for dropdown
 
+  clearable              : false,      // whether the value of the dropdown can be cleared
+
   apiSettings            : false,
   selectOnKeydown        : true,       // Whether selection should occur automatically when keyboard shortcuts used
   minCharacters          : 0,          // Minimum characters required to trigger API call
@@ -3701,6 +3781,7 @@ $.fn.dropdown.settings = {
 
   match                  : 'both',     // what to match against with search selection (both, text, or label)
   fullTextSearch         : false,      // search anywhere in value (set to 'exact' to require exact matches)
+  hideDividers           : false,      // Whether to hide any divider elements (specified in selector.divider) that are sibling to any items when searched (set to true will hide all dividers, set to 'empty' will hide them when they are not followed by a visible item)
 
   placeholder            : 'auto',     // whether to convert blank <select> values to placeholder text
   preserveHTML           : true,       // preserve html when selecting value
@@ -3798,7 +3879,8 @@ $.fn.dropdown.settings = {
     disabled     : 'disabled', // whether value should be disabled
     name         : 'name',     // displayed dropdown text
     value        : 'value',    // actual dropdown value
-    text         : 'text'      // displayed text when selected
+    text         : 'text',     // displayed text when selected
+    type         : 'type'      // type of dropdown element
   },
 
   keys : {
@@ -3817,6 +3899,7 @@ $.fn.dropdown.settings = {
 
   selector : {
     addition     : '.addition',
+    divider      : '.divider, .header',
     dropdown     : '.ui.dropdown',
     hidden       : '.hidden',
     icon         : '> .dropdown.icon',
@@ -3831,7 +3914,8 @@ $.fn.dropdown.settings = {
     search       : 'input.search, .menu > .search > input, .menu input.search',
     sizer        : '> input.sizer',
     text         : '> .text:not(.icon)',
-    unselectable : '.disabled, .filtered'
+    unselectable : '.disabled, .filtered',
+    clearIcon    : '> .remove.icon'
   },
 
   className : {
@@ -3856,7 +3940,8 @@ $.fn.dropdown.settings = {
     selection   : 'selection',
     upward      : 'upward',
     leftward    : 'left',
-    visible     : 'visible'
+    visible     : 'visible',
+    clearable   : 'clearable'
   }
 
 };
@@ -3897,16 +3982,28 @@ $.fn.dropdown.settings.templates = {
     ;
     $.each(values, function(index, option) {
       var
-        maybeText = (option[fields.text])
-          ? 'data-text="' + option[fields.text] + '"'
-          : '',
-        maybeDisabled = (option[fields.disabled])
-          ? 'disabled '
-          : ''
+        itemType = (option[fields.type])
+          ? option[fields.type]
+          : 'item'
       ;
-      html += '<div class="'+ maybeDisabled +'item" data-value="' + option[fields.value] + '"' + maybeText + '>';
-      html +=   option[fields.name];
-      html += '</div>';
+
+      if( itemType === 'item' ) {
+        var
+          maybeText = (option[fields.text])
+            ? 'data-text="' + option[fields.text] + '"'
+            : '',
+          maybeDisabled = (option[fields.disabled])
+            ? 'disabled '
+            : ''
+        ;
+        html += '<div class="'+ maybeDisabled +'item" data-value="' + option[fields.value] + '"' + maybeText + '>';
+        html +=   option[fields.name];
+        html += '</div>';
+      } else if (itemType === 'header') {
+        html += '<div class="header">';
+        html +=   option[fields.name];
+        html += '</div>';
+      }
     });
     return html;
   },
