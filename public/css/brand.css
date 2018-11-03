@@ -18,12 +18,17 @@ html, body {
     padding: 0;
 }
 
-input, button, select, label, option, div, body, html {
+input, button, select, label, option, div, body, html, .brand.istok_web {
     font-family: "Istok Web" !important;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5, h6, .brand.barlow {
     font-family: "Barlow" !important;
+}
+
+.fitted {
+    margin: 0;
+    padding: 0;
 }
 
 .brand.action {
@@ -32,23 +37,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 a.brand.link {
-    font-size: 20px;
     transition: 0.4s;
     color: var(--light-moss-green)
 }
 
 a.brand.link:hover {
     color: white;
-    font-weight: bolder;
 }
 
 a.brand.link.inverted:hover {
     color: var(--raisin-black);
-    font-weight: bolder;
 }
 
 a.brand.link.inverted {
     color: var(--kombu-green);
+    font-weight: bolder;
 }
 
 
@@ -77,8 +80,8 @@ a.brand.link.inverted {
 
 #content {
     margin: 0;
-    padding: 0;
     margin-top: 50px;
+    padding: 0;
     z-index: 2;
     background: transparent;
     position: absolute;

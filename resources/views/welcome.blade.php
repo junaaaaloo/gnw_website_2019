@@ -6,11 +6,13 @@
 
 @section('styles')
     <style>
-        #title {
+        #title_container {
+            height: auto;
             padding: 30px;
             background: var(--kombu-green);
             flex-direction: column;
             border-radius: 3px;
+            transition: .5s;
         }
         
         #part_of_gnw {
@@ -59,16 +61,33 @@
             text-align: left;
             font-size: 20px;
         }
+
+        @media only screen and (max-width: 767px) {
+          #steps .steps_container {
+                margin: 0px;
+                padding: 0px;
+            }
+        }
+
+        @media only screen and (max-height: 600px) {
+            #title {
+                height: auto;
+            }
+    
+            #title_container {
+                margin: 10px 0px;
+            }
+        }
     </style>
 @endsection
 
 @section('content') 
-<div class = "brand slide">
+<div class = "brand slide" id="title">
     <div class = "background" id = "particles"> </div>
     <div class = "overlay"> </div>
     <div class = "content flex-center flex-column"> 
-        <div id="title">
-              <img src="{{ asset('img/white-logo-compact.png')}}" width=200px>
+        <div id="title_container">
+              <img src="{{ asset('img/white-logo-compact.png')}}" width=120px>
               <h1 class = "ui inverted header">
                   <span style="font-size: 40px; letter-spacing: 0px; line-height: 40px"> CAPTURING IMAGES OF <br> <span style="color: var(--gwgreen)"> LASALLIAN EXCELLENCE </span> </span>
               </h1>
@@ -279,6 +298,5 @@ var config = {
 }
 
 particlesJS("particles", config)
-requestAnimationFrame();
 </script>
 @endsection

@@ -3,10 +3,24 @@
     color: white;
     background: var(--raisin-black);
     margin: 0 auto;
-    padding: 50px;
+    padding: 20px;
     text-align: center;
 }
 
 .footer .all_rights_reserved {
     font-size: 20px;
+}
+
+.footer .social_media {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+.footer .social_media .brand.link {
+    font-size: 30px;
+    padding: 0px;
+    margin-top: 10px;
+    height: 30px;
+    line-height: 30px;
 }

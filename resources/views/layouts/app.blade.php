@@ -43,16 +43,21 @@
     <div id="background"> </div>
     <div id="overlay"> </div>
     <nav id="navbar" class="ui stackable secondary menu">
-        <a href="/">
-            <img class = "header brand image" src="{{ asset('img/vertical-logo.png')}}">
-        </a>
-        <a href="{{ route ('about') }}" class="{{ $context == 'about' ? 'active' : '' }} nav item">
-            ABOUT US
-        </a>
-        <a href= "{{ route('contact') }}" class="{{ $context == 'contact' ? 'active' : '' }} nav item">
-            CONTACT US
-        </a>
+        <div>
+            <a class = "hamburger_menu brand link inverted">
+                <i class="icon bars"> </i>
+            </a>
+            <a href="/">
+                <img class = "header brand image" src="{{ asset('img/vertical-logo.png')}}">
+            </a>    
+        </div>
         <div class="right menu">
+            <a href="{{ route ('about') }}" class="{{ $context == 'about' ? 'active' : '' }} nav item">
+                ABOUT
+            </a>
+            <a href= "{{ route('contact') }}" class="{{ $context == 'contact' ? 'active' : '' }} nav item">
+                CONTACT
+            </a>
             <a id = "login" class="login-button nav item">
                 LOGIN
             </a>
@@ -89,13 +94,25 @@
         @yield('content')
         <div class = "footer">
             <img src="{{asset('img/all_logos.png')}}" width = "300px">
-            <div class = "all_rights_reserved"> Green & White © All Rights Reserved 2018 </div>
+            <div class = "all_rights_reserved"> 
+                Green & White © All Rights Reserved 2018 
+            </div>
+            
+            <div class = "social_media">
+                <a class = "brand link" href = "https://www.facebook.com/GnW2019"> 
+                    <i class = "icon facebook"> </i>
+                </a> 
+                <a class = "brand link" href = "mailto:gnw2019@gmail.com">
+                    <i class = "icon envelope"> </i>
+                </a>
+            </div>
         </div>
     </div>
     
     <!-- SCRIPTS -->
     <script src="{{ asset('js/index.js') }}"></script>
     <script src="{{ asset('js/login.js') }}"></script>
+    <script src="{{ asset('js/navbar.js') }}"></script>
     @yield('scripts')
 </body>
 </html>
