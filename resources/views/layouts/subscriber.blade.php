@@ -10,6 +10,9 @@
 
 @section('content')
 
+
+
+
 <nav class="side-navbar">
     <div class="side-navbar-wrapper">
         <div class="sidenav-header d-flex align-items-center justify-content-center">
