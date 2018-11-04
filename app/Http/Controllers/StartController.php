@@ -7,11 +7,11 @@ use Illuminate\Http\Request;
 
 class StartController extends Controller {
     public function index() {
-//    	if(Auth::check()) {
+    	if(Auth::check()) {
 	    	return redirect()->route('home');
-//	    }
+	    }
 
-//	    return view('welcome', ['context' => "home"]);
+	    return view('welcome', ['context' => "home"]);
 	}
 	
 	public function about() {
