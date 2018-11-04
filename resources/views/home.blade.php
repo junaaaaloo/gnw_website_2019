@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.subscriber')
 
 @section('stylesheets')
 <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
@@ -33,7 +33,7 @@
 
 @section('content')
 <section class="updates section-padding">
-    <div class="container-fluid">
+    <div clasds="container-fluid">
         <div class="row">
             <div class="col-lg-12 col-md-12">
                 <!-- END OF LIST -->

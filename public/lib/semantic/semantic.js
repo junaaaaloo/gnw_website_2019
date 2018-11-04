@@ -1,7 +1,7 @@
  /*
- * # Semantic UI - 2.3.2
- * https://github.com/Semantic-Org/Semantic-UI
- * http://www.semantic-ui.com/
+ * # Fomantic UI - 2.6.3
+ * https://github.com/fomantic/Fomantic-UI
+ * http://fomantic-ui.com/
  *
  * Copyright 2014 Contributors
  * Released under the MIT license
@@ -9,7 +9,7 @@
  *
  */
 /*!
- * # Semantic UI 2.3.2 - Site
+ * # Semantic UI 2.6.3 - Site
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -449,6 +449,7 @@ $.site.settings = {
   modules: [
     'accordion',
     'api',
+    'calendar',
     'checkbox',
     'dimmer',
     'dropdown',
@@ -457,15 +458,17 @@ $.site.settings = {
     'modal',
     'nag',
     'popup',
+    'range',
     'rating',
     'shape',
     'sidebar',
     'state',
     'sticky',
     'tab',
+    'toast',
     'transition',
-    'visit',
-    'visibility'
+    'visibility',
+    'visit'
   ],
 
   siteNamespace   : 'site',
@@ -497,7 +500,7 @@ $.extend($.expr[ ":" ], {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Form Validation
+ * # Semantic UI 2.6.3 - Form Validation
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -1526,7 +1529,7 @@ $.fn.form = function(parameters) {
             // cast to string avoiding encoding special values
             value = (value === undefined || value === '' || value === null)
               ? ''
-              : $.trim(value + '')
+              : (settings.shouldTrim) ? $.trim(value + '') : String(value + '')
             ;
             return ruleFunction.call($field, value, ancillary);
           }
@@ -1717,6 +1720,7 @@ $.fn.form.settings = {
 
   delay             : 200,
   revalidate        : true,
+  shouldTrim        : true,
 
   transition        : 'scale',
   duration          : 200,
@@ -2204,7 +2208,7 @@ $.fn.form.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Accordion
+ * # Semantic UI 2.6.3 - Accordion
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -2818,7 +2822,1447 @@ $.extend( $.easing, {
 
 
 /*!
- * # Semantic UI 2.3.2 - Checkbox
+ * # Semantic UI 2.6.3 - Calendar
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ($, window, document, undefined) {
+
+'use strict';
+
+window = (typeof window != 'undefined' && window.Math == Math)
+  ? window
+  : (typeof self != 'undefined' && self.Math == Math)
+    ? self
+    : Function('return this')()
+;
+
+$.fn.calendar = function(parameters) {
+  var
+    $allModules    = $(this),
+
+    moduleSelector = $allModules.selector || '',
+
+    time           = new Date().getTime(),
+    performance    = [],
+
+    query          = arguments[0],
+    methodInvoked  = (typeof query == 'string'),
+    queryArguments = [].slice.call(arguments, 1),
+    returnedValue
+  ;
+
+  $allModules
+    .each(function () {
+      var
+        settings = ( $.isPlainObject(parameters) )
+          ? $.extend(true, {}, $.fn.calendar.settings, parameters)
+          : $.extend({}, $.fn.calendar.settings),
+
+        className = settings.className,
+        namespace = settings.namespace,
+        selector = settings.selector,
+        formatter = settings.formatter,
+        parser = settings.parser,
+        metadata = settings.metadata,
+        error = settings.error,
+
+        eventNamespace = '.' + namespace,
+        moduleNamespace = 'module-' + namespace,
+
+        $module = $(this),
+        $input = $module.find(selector.input),
+        $container = $module.find(selector.popup),
+        $activator = $module.find(selector.activator),
+
+        element = this,
+        instance = $module.data(moduleNamespace),
+
+        isTouch,
+        isTouchDown = false,
+        focusDateUsedForRange = false,
+        module
+      ;
+
+      module = {
+
+        initialize: function () {
+          module.debug('Initializing calendar for', element, $module);
+
+          isTouch = module.get.isTouch();
+          module.setup.config();
+          module.setup.popup();
+          module.setup.inline();
+          module.setup.input();
+          module.setup.date();
+          module.create.calendar();
+
+          module.bind.events();
+          module.instantiate();
+        },
+
+        instantiate: function () {
+          module.verbose('Storing instance of calendar');
+          instance = module;
+          $module.data(moduleNamespace, instance);
+        },
+
+        destroy: function () {
+          module.verbose('Destroying previous calendar for', element);
+          $module.removeData(moduleNamespace);
+          module.unbind.events();
+        },
+
+        setup: {
+          config: function () {
+            if (module.get.minDate() !== null) {
+              module.set.minDate($module.data(metadata.minDate));
+            }
+            if (module.get.maxDate() !== null) {
+              module.set.maxDate($module.data(metadata.maxDate));
+            }
+          },
+          popup: function () {
+            if (settings.inline) {
+              return;
+            }
+            if (!$activator.length) {
+              $activator = $module.children().first();
+              if (!$activator.length) {
+                return;
+              }
+            }
+            if ($.fn.popup === undefined) {
+              module.error(error.popup);
+              return;
+            }
+            if (!$container.length) {
+              //prepend the popup element to the activator's parent so that it has less chance of messing with
+              //the styling (eg input action button needs to be the last child to have correct border radius)
+              $container = $('<div/>').addClass(className.popup).prependTo($activator.parent());
+            }
+            $container.addClass(className.calendar);
+            var onVisible = settings.onVisible;
+            var onHidden = settings.onHidden;
+            if (!$input.length) {
+              //no input, $container has to handle focus/blur
+              $container.attr('tabindex', '0');
+              onVisible = function () {
+                module.focus();
+                return settings.onVisible.apply($container, arguments);
+              };
+              onHidden = function () {
+                module.blur();
+                return settings.onHidden.apply($container, arguments);
+              };
+            }
+            var onShow = function () {
+              //reset the focus date onShow
+              module.set.focusDate(module.get.date());
+              module.set.mode(settings.startMode);
+              return settings.onShow.apply($container, arguments);
+            };
+            var on = settings.on || ($input.length ? 'focus' : 'click');
+            var options = $.extend({}, settings.popupOptions, {
+              popup: $container,
+              on: on,
+              hoverable: on === 'hover',
+              onShow: onShow,
+              onVisible: onVisible,
+              onHide: settings.onHide,
+              onHidden: onHidden
+            });
+            module.popup(options);
+          },
+          inline: function () {
+            if ($activator.length && !settings.inline) {
+              return;
+            }
+            $container = $('<div/>').addClass(className.calendar).appendTo($module);
+            if (!$input.length) {
+              $container.attr('tabindex', '0');
+            }
+          },
+          input: function () {
+            if (settings.touchReadonly && $input.length && isTouch) {
+              $input.prop('readonly', true);
+            }
+          },
+          date: function () {
+            if ($input.length) {
+              var val = $input.val();
+              var date = parser.date(val, settings);
+              module.set.date(date, settings.formatInput, false);
+            }
+          }
+        },
+
+        create: {
+          calendar: function () {
+            var i, r, c, p, row, cell, pageGrid;
+
+            var mode = module.get.mode();
+            var today = new Date();
+            var date = module.get.date();
+            var focusDate = module.get.focusDate();
+            var display = focusDate || date || settings.initialDate || today;
+            display = module.helper.dateInRange(display);
+
+            if (!focusDate) {
+              focusDate = display;
+              module.set.focusDate(focusDate, false, false);
+            }
+
+            var isYear = mode === 'year';
+            var isMonth = mode === 'month';
+            var isDay = mode === 'day';
+            var isHour = mode === 'hour';
+            var isMinute = mode === 'minute';
+            var isTimeOnly = settings.type === 'time';
+
+            var multiMonth = Math.max(settings.multiMonth, 1);
+            var monthOffset = !isDay ? 0 : module.get.monthOffset();
+
+            var minute = display.getMinutes();
+            var hour = display.getHours();
+            var day = display.getDate();
+            var startMonth = display.getMonth() + monthOffset;
+            var year = display.getFullYear();
+
+            var columns = isDay ? settings.showWeekNumbers ? 8 : 7 : isHour ? 4 : 3;
+            var rows = isDay || isHour ? 6 : 4;
+            var pages = isDay ? multiMonth : 1;
+
+            var container = $container;
+            container.empty();
+            if (pages > 1) {
+              pageGrid = $('<div/>').addClass(className.grid).appendTo(container);
+            }
+
+            for (p = 0; p < pages; p++) {
+              if (pages > 1) {
+                var pageColumn = $('<div/>').addClass(className.column).appendTo(pageGrid);
+                container = pageColumn;
+              }
+
+              var month = startMonth + p;
+              var firstMonthDayColumn = (new Date(year, month, 1).getDay() - settings.firstDayOfWeek % 7 + 7) % 7;
+              if (!settings.constantHeight && isDay) {
+                var requiredCells = new Date(year, month + 1, 0).getDate() + firstMonthDayColumn;
+                rows = Math.ceil(requiredCells / 7);
+              }
+
+              var yearChange = isYear ? 10 : isMonth ? 1 : 0;
+              var monthChange = isDay ? 1 : 0;
+              var dayChange = isHour || isMinute ? 1 : 0;
+              var prevNextDay = isHour || isMinute ? day : 1;
+              var prevDate = new Date(year - yearChange, month - monthChange, prevNextDay - dayChange, hour);
+              var nextDate = new Date(year + yearChange, month + monthChange, prevNextDay + dayChange, hour);
+
+              var prevLast = isYear ? new Date(Math.ceil(year / 10) * 10 - 9, 0, 0) :
+                isMonth ? new Date(year, 0, 0) : isDay ? new Date(year, month, 0) : new Date(year, month, day, -1);
+              var nextFirst = isYear ? new Date(Math.ceil(year / 10) * 10 + 1, 0, 1) :
+                isMonth ? new Date(year + 1, 0, 1) : isDay ? new Date(year, month + 1, 1) : new Date(year, month, day + 1);
+
+              var tempMode = mode;
+              if (isDay && settings.showWeekNumbers){
+                tempMode += ' andweek';
+              }
+              var table = $('<table/>').addClass(className.table).addClass(tempMode).appendTo(container);
+              var textColumns = columns;
+              //no header for time-only mode
+              if (!isTimeOnly) {
+                var thead = $('<thead/>').appendTo(table);
+
+                row = $('<tr/>').appendTo(thead);
+                cell = $('<th/>').attr('colspan', '' + columns).appendTo(row);
+
+                var headerDate = isYear || isMonth ? new Date(year, 0, 1) :
+                  isDay ? new Date(year, month, 1) : new Date(year, month, day, hour, minute);
+                var headerText = $('<span/>').addClass(className.link).appendTo(cell);
+                headerText.text(formatter.header(headerDate, mode, settings));
+                var newMode = isMonth ? (settings.disableYear ? 'day' : 'year') :
+                  isDay ? (settings.disableMonth ? 'year' : 'month') : 'day';
+                headerText.data(metadata.mode, newMode);
+
+                if (p === 0) {
+                  var prev = $('<span/>').addClass(className.prev).appendTo(cell);
+                  prev.data(metadata.focusDate, prevDate);
+                  prev.toggleClass(className.disabledCell, !module.helper.isDateInRange(prevLast, mode));
+                  $('<i/>').addClass(className.prevIcon).appendTo(prev);
+                }
+
+                if (p === pages - 1) {
+                  var next = $('<span/>').addClass(className.next).appendTo(cell);
+                  next.data(metadata.focusDate, nextDate);
+                  next.toggleClass(className.disabledCell, !module.helper.isDateInRange(nextFirst, mode));
+                  $('<i/>').addClass(className.nextIcon).appendTo(next);
+                }
+                if (isDay) {
+                  row = $('<tr/>').appendTo(thead);
+                  if(settings.showWeekNumbers) {
+                      cell = $('<th/>').appendTo(row);
+                      cell.text(settings.text.weekNo);
+                      cell.addClass(className.disabledCell);
+                      textColumns--;
+                  }
+                  for (i = 0; i < textColumns; i++) {
+                    cell = $('<th/>').appendTo(row);
+                    cell.text(formatter.dayColumnHeader((i + settings.firstDayOfWeek) % 7, settings));
+                  }
+                }
+              }
+
+              var tbody = $('<tbody/>').appendTo(table);
+              i = isYear ? Math.ceil(year / 10) * 10 - 9 : isDay ? 1 - firstMonthDayColumn : 0;
+              for (r = 0; r < rows; r++) {
+                row = $('<tr/>').appendTo(tbody);
+                if(isDay && settings.showWeekNumbers){
+                    cell = $('<th/>').appendTo(row);
+                    cell.text(module.get.weekOfYear(year,month,i+1-settings.firstDayOfWeek));
+                    cell.addClass(className.disabledCell);
+                }
+                for (c = 0; c < textColumns; c++, i++) {
+                  var cellDate = isYear ? new Date(i, month, 1, hour, minute) :
+                    isMonth ? new Date(year, i, 1, hour, minute) : isDay ? new Date(year, month, i, hour, minute) :
+                      isHour ? new Date(year, month, day, i) : new Date(year, month, day, hour, i * 5);
+                  var cellText = isYear ? i :
+                    isMonth ? settings.text.monthsShort[i] : isDay ? cellDate.getDate() :
+                      formatter.time(cellDate, settings, true);
+                  cell = $('<td/>').addClass(className.cell).appendTo(row);
+                  cell.text(cellText);
+                  cell.data(metadata.date, cellDate);
+                  var adjacent = isDay && cellDate.getMonth() !== ((month + 12) % 12);
+                  var disabled = adjacent || !module.helper.isDateInRange(cellDate, mode) || settings.isDisabled(cellDate, mode);
+                  var active = module.helper.dateEqual(cellDate, date, mode);
+                  var isToday = module.helper.dateEqual(cellDate, today, mode);
+                  cell.toggleClass(className.adjacentCell, adjacent);
+                  cell.toggleClass(className.disabledCell, disabled);
+                  cell.toggleClass(className.activeCell, active && !adjacent);
+                  if (!isHour && !isMinute) {
+                    cell.toggleClass(className.todayCell, !adjacent && isToday);
+                  }
+
+                  // Allow for external modifications of each cell
+                  var cellOptions = {
+                    mode: mode,
+                    adjacent: adjacent,
+                    disabled: disabled,
+                    active: active,
+                    today: isToday
+                  };
+                  formatter.cell(cell, cellDate, cellOptions);
+
+                  if (module.helper.dateEqual(cellDate, focusDate, mode)) {
+                    //ensure that the focus date is exactly equal to the cell date
+                    //so that, if selected, the correct value is set
+                    module.set.focusDate(cellDate, false, false);
+                  }
+                }
+              }
+
+              if (settings.today) {
+                var todayRow = $('<tr/>').appendTo(tbody);
+                var todayButton = $('<td/>').attr('colspan', '' + columns).addClass(className.today).appendTo(todayRow);
+                todayButton.text(formatter.today(settings));
+                todayButton.data(metadata.date, today);
+              }
+
+              module.update.focus(false, table);
+            }
+          }
+        },
+
+        update: {
+          focus: function (updateRange, container) {
+            container = container || $container;
+            var mode = module.get.mode();
+            var date = module.get.date();
+            var focusDate = module.get.focusDate();
+            var startDate = module.get.startDate();
+            var endDate = module.get.endDate();
+            var rangeDate = (updateRange ? focusDate : null) || date || (!isTouch ? focusDate : null);
+
+            container.find('td').each(function () {
+              var cell = $(this);
+              var cellDate = cell.data(metadata.date);
+              if (!cellDate) {
+                return;
+              }
+              var disabled = cell.hasClass(className.disabledCell);
+              var active = cell.hasClass(className.activeCell);
+              var adjacent = cell.hasClass(className.adjacentCell);
+              var focused = module.helper.dateEqual(cellDate, focusDate, mode);
+              var inRange = !rangeDate ? false :
+                ((!!startDate && module.helper.isDateInRange(cellDate, mode, startDate, rangeDate)) ||
+                (!!endDate && module.helper.isDateInRange(cellDate, mode, rangeDate, endDate)));
+              cell.toggleClass(className.focusCell, focused && (!isTouch || isTouchDown) && !adjacent);
+              cell.toggleClass(className.rangeCell, inRange && !active && !disabled);
+            });
+          }
+        },
+
+        refresh: function () {
+          module.create.calendar();
+        },
+
+        bind: {
+          events: function () {
+            module.debug('Binding events');
+            $container.on('mousedown' + eventNamespace, module.event.mousedown);
+            $container.on('touchstart' + eventNamespace, module.event.mousedown);
+            $container.on('mouseup' + eventNamespace, module.event.mouseup);
+            $container.on('touchend' + eventNamespace, module.event.mouseup);
+            $container.on('mouseover' + eventNamespace, module.event.mouseover);
+            if ($input.length) {
+              $input.on('input' + eventNamespace, module.event.inputChange);
+              $input.on('focus' + eventNamespace, module.event.inputFocus);
+              $input.on('blur' + eventNamespace, module.event.inputBlur);
+              $input.on('click' + eventNamespace, module.event.inputClick);
+              $input.on('keydown' + eventNamespace, module.event.keydown);
+            } else {
+              $container.on('keydown' + eventNamespace, module.event.keydown);
+            }
+          }
+        },
+
+        unbind: {
+          events: function () {
+            module.debug('Unbinding events');
+            $container.off(eventNamespace);
+            if ($input.length) {
+              $input.off(eventNamespace);
+            }
+          }
+        },
+
+        event: {
+          mouseover: function (event) {
+            var target = $(event.target);
+            var date = target.data(metadata.date);
+            var mousedown = event.buttons === 1;
+            if (date) {
+              module.set.focusDate(date, false, true, mousedown);
+            }
+          },
+          mousedown: function (event) {
+            if ($input.length) {
+              //prevent the mousedown on the calendar causing the input to lose focus
+              event.preventDefault();
+            }
+            isTouchDown = event.type.indexOf('touch') >= 0;
+            var target = $(event.target);
+            var date = target.data(metadata.date);
+            if (date) {
+              module.set.focusDate(date, false, true, true);
+            }
+          },
+          mouseup: function (event) {
+            //ensure input has focus so that it receives keydown events for calendar navigation
+            module.focus();
+            event.preventDefault();
+            event.stopPropagation();
+            isTouchDown = false;
+            var target = $(event.target);
+            var parent = target.parent();
+            if (parent.data(metadata.date) || parent.data(metadata.focusDate) || parent.data(metadata.mode)) {
+              //clicked on a child element, switch to parent (used when clicking directly on prev/next <i> icon element)
+              target = parent;
+            }
+            var date = target.data(metadata.date);
+            var focusDate = target.data(metadata.focusDate);
+            var mode = target.data(metadata.mode);
+            if (date) {
+              var forceSet = target.hasClass(className.today);
+              module.selectDate(date, forceSet);
+            }
+            else if (focusDate) {
+              module.set.focusDate(focusDate);
+            }
+            else if (mode) {
+              module.set.mode(mode);
+            }
+          },
+          keydown: function (event) {
+            if (event.keyCode === 27 || event.keyCode === 9) {
+              //esc || tab
+              module.popup('hide');
+            }
+
+            if (module.popup('is visible')) {
+              if (event.keyCode === 37 || event.keyCode === 38 || event.keyCode === 39 || event.keyCode === 40) {
+                //arrow keys
+                var mode = module.get.mode();
+                var bigIncrement = mode === 'day' ? 7 : mode === 'hour' ? 4 : 3;
+                var increment = event.keyCode === 37 ? -1 : event.keyCode === 38 ? -bigIncrement : event.keyCode == 39 ? 1 : bigIncrement;
+                increment *= mode === 'minute' ? 5 : 1;
+                var focusDate = module.get.focusDate() || module.get.date() || new Date();
+                var year = focusDate.getFullYear() + (mode === 'year' ? increment : 0);
+                var month = focusDate.getMonth() + (mode === 'month' ? increment : 0);
+                var day = focusDate.getDate() + (mode === 'day' ? increment : 0);
+                var hour = focusDate.getHours() + (mode === 'hour' ? increment : 0);
+                var minute = focusDate.getMinutes() + (mode === 'minute' ? increment : 0);
+                var newFocusDate = new Date(year, month, day, hour, minute);
+                if (settings.type === 'time') {
+                  newFocusDate = module.helper.mergeDateTime(focusDate, newFocusDate);
+                }
+                if (module.helper.isDateInRange(newFocusDate, mode)) {
+                  module.set.focusDate(newFocusDate);
+                }
+              } else if (event.keyCode === 13) {
+                //enter
+                var mode = module.get.mode();
+                var date = module.get.focusDate();
+                if (date && !settings.isDisabled(date, mode)) {
+                  module.selectDate(date);
+                }
+                //disable form submission:
+                event.preventDefault();
+                event.stopPropagation();
+              }
+            }
+
+            if (event.keyCode === 38 || event.keyCode === 40) {
+              //arrow-up || arrow-down
+              event.preventDefault(); //don't scroll
+              module.popup('show');
+            }
+          },
+          inputChange: function () {
+            var val = $input.val();
+            var date = parser.date(val, settings);
+            module.set.date(date, false);
+          },
+          inputFocus: function () {
+            $container.addClass(className.active);
+          },
+          inputBlur: function () {
+            $container.removeClass(className.active);
+            if (settings.formatInput) {
+              var date = module.get.date();
+              var text = formatter.datetime(date, settings);
+              $input.val(text);
+            }
+          },
+          inputClick: function () {
+            module.popup('show');
+          }
+        },
+
+        get: {
+          weekOfYear: function(weekYear,weekMonth,weekDay) {
+              // adapted from http://www.merlyn.demon.co.uk/weekcalc.htm
+              var ms1d = 864e5, // milliseconds in a day
+                  ms7d = 7 * ms1d; // milliseconds in a week
+
+              return function() { // return a closure so constants get calculated only once
+                  var DC3 = Date.UTC(weekYear, weekMonth, weekDay + 3) / ms1d, // an Absolute Day Number
+                      AWN = Math.floor(DC3 / 7), // an Absolute Week Number
+                      Wyr = new Date(AWN * ms7d).getUTCFullYear();
+
+                  return AWN - Math.floor(Date.UTC(Wyr, 0, 7) / ms7d) + 1;
+              }();
+          },
+          date: function () {
+            return $module.data(metadata.date) || null;
+          },
+          focusDate: function () {
+            return $module.data(metadata.focusDate) || null;
+          },
+          startDate: function () {
+            var startModule = module.get.calendarModule(settings.startCalendar);
+            return (startModule ? startModule.get.date() : $module.data(metadata.startDate)) || null;
+          },
+          endDate: function () {
+            var endModule = module.get.calendarModule(settings.endCalendar);
+            return (endModule ? endModule.get.date() : $module.data(metadata.endDate)) || null;
+          },
+          minDate: function() {
+            return $module.data(metadata.minDate) || null;
+          },
+          maxDate: function() {
+            return $module.data(metadata.maxDate) || null;
+          },
+          monthOffset: function () {
+            return $module.data(metadata.monthOffset) || 0;
+          },
+          mode: function () {
+            //only returns valid modes for the current settings
+            var mode = $module.data(metadata.mode) || settings.startMode;
+            var validModes = module.get.validModes();
+            if ($.inArray(mode, validModes) >= 0) {
+              return mode;
+            }
+            return settings.type === 'time' ? 'hour' :
+              settings.type === 'month' ? 'month' :
+                settings.type === 'year' ? 'year' : 'day';
+          },
+          validModes: function () {
+            var validModes = [];
+            if (settings.type !== 'time') {
+              if (!settings.disableYear || settings.type === 'year') {
+                validModes.push('year');
+              }
+              if (!(settings.disableMonth || settings.type === 'year') || settings.type === 'month') {
+                validModes.push('month');
+              }
+              if (settings.type.indexOf('date') >= 0) {
+                validModes.push('day');
+              }
+            }
+            if (settings.type.indexOf('time') >= 0) {
+              validModes.push('hour');
+              if (!settings.disableMinute) {
+                validModes.push('minute');
+              }
+            }
+            return validModes;
+          },
+          isTouch: function () {
+            try {
+              document.createEvent('TouchEvent');
+              return true;
+            }
+            catch (e) {
+              return false;
+            }
+          },
+          calendarModule: function (selector) {
+            if (!selector) {
+              return null;
+            }
+            if (!(selector instanceof $)) {
+              selector = $module.parent().children(selector).first();
+            }
+            //assume range related calendars are using the same namespace
+            return selector.data(moduleNamespace);
+          }
+        },
+
+        set: {
+          date: function (date, updateInput, fireChange) {
+            updateInput = updateInput !== false;
+            fireChange = fireChange !== false;
+            date = module.helper.sanitiseDate(date);
+            date = module.helper.dateInRange(date);
+
+            var mode = module.get.mode();
+            var text = formatter.datetime(date, settings);
+            if (fireChange && settings.onChange.call(element, date, text, mode) === false) {
+              return false;
+            }
+
+            module.set.focusDate(date);
+
+            if (settings.isDisabled(date, mode)) {
+              return false;
+            }
+
+            var endDate = module.get.endDate();
+            if (!!endDate && !!date && date > endDate) {
+              //selected date is greater than end date in range, so clear end date
+              module.set.endDate(undefined);
+            }
+            module.set.dataKeyValue(metadata.date, date);
+
+            if (updateInput && $input.length) {
+              $input.val(text);
+            }
+          },
+          startDate: function (date, refreshCalendar) {
+            date = module.helper.sanitiseDate(date);
+            var startModule = module.get.calendarModule(settings.startCalendar);
+            if (startModule) {
+              startModule.set.date(date);
+            }
+            module.set.dataKeyValue(metadata.startDate, date, refreshCalendar);
+          },
+          endDate: function (date, refreshCalendar) {
+            date = module.helper.sanitiseDate(date);
+            var endModule = module.get.calendarModule(settings.endCalendar);
+            if (endModule) {
+              endModule.set.date(date);
+            }
+            module.set.dataKeyValue(metadata.endDate, date, refreshCalendar);
+          },
+          focusDate: function (date, refreshCalendar, updateFocus, updateRange) {
+            date = module.helper.sanitiseDate(date);
+            date = module.helper.dateInRange(date);
+            var isDay = module.get.mode() === 'day';
+            var oldFocusDate = module.get.focusDate();
+            if (isDay && date && oldFocusDate) {
+              var yearDelta = date.getFullYear() - oldFocusDate.getFullYear();
+              var monthDelta = yearDelta * 12 + date.getMonth() - oldFocusDate.getMonth();
+              if (monthDelta) {
+                var monthOffset = module.get.monthOffset() - monthDelta;
+                module.set.monthOffset(monthOffset, false);
+              }
+            }
+            var changed = module.set.dataKeyValue(metadata.focusDate, date, refreshCalendar);
+            updateFocus = (updateFocus !== false && changed && refreshCalendar === false) || focusDateUsedForRange != updateRange;
+            focusDateUsedForRange = updateRange;
+            if (updateFocus) {
+              module.update.focus(updateRange);
+            }
+          },
+          minDate: function (date) {
+            date = module.helper.sanitiseDate(date);
+            if (settings.maxDate !== null && settings.maxDate <= date) {
+              module.verbose('Unable to set minDate variable bigger that maxDate variable', date, settings.maxDate);
+            } else {
+              module.setting('minDate', date);
+              module.set.dataKeyValue(metadata.minDate, date);
+            }
+          },
+          maxDate: function (date) {
+            date = module.helper.sanitiseDate(date);
+            if (settings.minDate !== null && settings.minDate >= date) {
+              module.verbose('Unable to set maxDate variable lower that minDate variable', date, settings.minDate);
+            } else {
+              module.setting('maxDate', date);
+              module.set.dataKeyValue(metadata.maxDate, date);
+            }
+          },
+          monthOffset: function (monthOffset, refreshCalendar) {
+            var multiMonth = Math.max(settings.multiMonth, 1);
+            monthOffset = Math.max(1 - multiMonth, Math.min(0, monthOffset));
+            module.set.dataKeyValue(metadata.monthOffset, monthOffset, refreshCalendar);
+          },
+          mode: function (mode, refreshCalendar) {
+            module.set.dataKeyValue(metadata.mode, mode, refreshCalendar);
+          },
+          dataKeyValue: function (key, value, refreshCalendar) {
+            var oldValue = $module.data(key);
+            var equal = oldValue === value || (oldValue <= value && oldValue >= value); //equality test for dates and string objects
+            if (value) {
+              $module.data(key, value);
+            } else {
+              $module.removeData(key);
+            }
+            refreshCalendar = refreshCalendar !== false && !equal;
+            if (refreshCalendar) {
+              module.refresh();
+            }
+            return !equal;
+          }
+        },
+
+        selectDate: function (date, forceSet) {
+          module.verbose('New date selection', date)
+          var mode = module.get.mode();
+          var complete = forceSet || mode === 'minute' ||
+            (settings.disableMinute && mode === 'hour') ||
+            (settings.type === 'date' && mode === 'day') ||
+            (settings.type === 'month' && mode === 'month') ||
+            (settings.type === 'year' && mode === 'year');
+          if (complete) {
+            var canceled = module.set.date(date) === false;
+            if (!canceled && settings.closable) {
+              module.popup('hide');
+              //if this is a range calendar, show the end date calendar popup and focus the input
+              var endModule = module.get.calendarModule(settings.endCalendar);
+              if (endModule) {
+                endModule.popup('show');
+                endModule.focus();
+              }
+            }
+          } else {
+            var newMode = mode === 'year' ? (!settings.disableMonth ? 'month' : 'day') :
+              mode === 'month' ? 'day' : mode === 'day' ? 'hour' : 'minute';
+            module.set.mode(newMode);
+            if (mode === 'hour' || (mode === 'day' && module.get.date())) {
+              //the user has chosen enough to consider a valid date/time has been chosen
+              module.set.date(date);
+            } else {
+              module.set.focusDate(date);
+            }
+          }
+        },
+
+        changeDate: function (date) {
+          module.set.date(date);
+        },
+
+        clear: function () {
+          module.set.date(undefined);
+        },
+
+        popup: function () {
+          return $activator.popup.apply($activator, arguments);
+        },
+
+        focus: function () {
+          if ($input.length) {
+            $input.focus();
+          } else {
+            $container.focus();
+          }
+        },
+        blur: function () {
+          if ($input.length) {
+            $input.blur();
+          } else {
+            $container.blur();
+          }
+        },
+
+        helper: {
+          sanitiseDate: function (date) {
+            if (!date) {
+              return undefined;
+            }
+            if (!(date instanceof Date)) {
+              date = parser.date('' + date, settings);
+            }
+            if (isNaN(date.getTime())) {
+              return undefined;
+            }
+            return date;
+          },
+          dateDiff: function (date1, date2, mode) {
+            mode = mode || 'day';
+            var isTimeOnly = settings.type === 'time';
+            var isYear = mode === 'year';
+            var isYearOrMonth = isYear || mode === 'month';
+            var isMinute = mode === 'minute';
+            var isHourOrMinute = isMinute || mode === 'hour';
+            //only care about a minute accuracy of 5
+            date1 = new Date(
+              isTimeOnly ? 2000 : date1.getFullYear(),
+              isTimeOnly ? 0 : isYear ? 0 : date1.getMonth(),
+              isTimeOnly ? 1 : isYearOrMonth ? 1 : date1.getDate(),
+              !isHourOrMinute ? 0 : date1.getHours(),
+              !isMinute ? 0 : 5 * Math.floor(date1.getMinutes() / 5));
+            date2 = new Date(
+              isTimeOnly ? 2000 : date2.getFullYear(),
+              isTimeOnly ? 0 : isYear ? 0 : date2.getMonth(),
+              isTimeOnly ? 1 : isYearOrMonth ? 1 : date2.getDate(),
+              !isHourOrMinute ? 0 : date2.getHours(),
+              !isMinute ? 0 : 5 * Math.floor(date2.getMinutes() / 5));
+            return date2.getTime() - date1.getTime();
+          },
+          dateEqual: function (date1, date2, mode) {
+            return !!date1 && !!date2 && module.helper.dateDiff(date1, date2, mode) === 0;
+          },
+          isDateInRange: function (date, mode, minDate, maxDate) {
+            if (!minDate && !maxDate) {
+              var startDate = module.get.startDate();
+              minDate = startDate && settings.minDate ? new Date(Math.max(startDate, settings.minDate)) : startDate || settings.minDate;
+              maxDate = settings.maxDate;
+            }
+            minDate = minDate && new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), minDate.getHours(), 5 * Math.ceil(minDate.getMinutes() / 5));
+            return !(!date ||
+            (minDate && module.helper.dateDiff(date, minDate, mode) > 0) ||
+            (maxDate && module.helper.dateDiff(maxDate, date, mode) > 0));
+          },
+          dateInRange: function (date, minDate, maxDate) {
+            if (!minDate && !maxDate) {
+              var startDate = module.get.startDate();
+              minDate = startDate && settings.minDate ? new Date(Math.max(startDate, settings.minDate)) : startDate || settings.minDate;
+              maxDate = settings.maxDate;
+            }
+            minDate = minDate && new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate(), minDate.getHours(), 5 * Math.ceil(minDate.getMinutes() / 5));
+            var isTimeOnly = settings.type === 'time';
+            return !date ? date :
+              (minDate && module.helper.dateDiff(date, minDate, 'minute') > 0) ?
+                (isTimeOnly ? module.helper.mergeDateTime(date, minDate) : minDate) :
+                (maxDate && module.helper.dateDiff(maxDate, date, 'minute') > 0) ?
+                  (isTimeOnly ? module.helper.mergeDateTime(date, maxDate) : maxDate) :
+                  date;
+          },
+          mergeDateTime: function (date, time) {
+            return (!date || !time) ? time :
+              new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.getHours(), time.getMinutes());
+          }
+        },
+
+        setting: function (name, value) {
+          module.debug('Changing setting', name, value);
+          if ($.isPlainObject(name)) {
+            $.extend(true, settings, name);
+          }
+          else if (value !== undefined) {
+            if ($.isPlainObject(settings[name])) {
+              $.extend(true, settings[name], value);
+            }
+            else {
+              settings[name] = value;
+            }
+          }
+          else {
+            return settings[name];
+          }
+        },
+        internal: function (name, value) {
+          if( $.isPlainObject(name) ) {
+            $.extend(true, module, name);
+          }
+          else if(value !== undefined) {
+            module[name] = value;
+          }
+          else {
+            return module[name];
+          }
+        },
+        debug: function () {
+          if (!settings.silent && settings.debug) {
+            if (settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.debug = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.debug.apply(console, arguments);
+            }
+          }
+        },
+        verbose: function () {
+          if (!settings.silent && settings.verbose && settings.debug) {
+            if (settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.verbose = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.verbose.apply(console, arguments);
+            }
+          }
+        },
+        error: function () {
+          if (!settings.silent) {
+            module.error = Function.prototype.bind.call(console.error, console, settings.name + ':');
+            module.error.apply(console, arguments);
+          }
+        },
+        performance: {
+          log: function (message) {
+            var
+              currentTime,
+              executionTime,
+              previousTime
+              ;
+            if (settings.performance) {
+              currentTime = new Date().getTime();
+              previousTime = time || currentTime;
+              executionTime = currentTime - previousTime;
+              time = currentTime;
+              performance.push({
+                'Name': message[0],
+                'Arguments': [].slice.call(message, 1) || '',
+                'Element': element,
+                'Execution Time': executionTime
+              });
+            }
+            clearTimeout(module.performance.timer);
+            module.performance.timer = setTimeout(module.performance.display, 500);
+          },
+          display: function () {
+            var
+              title = settings.name + ':',
+              totalTime = 0
+              ;
+            time = false;
+            clearTimeout(module.performance.timer);
+            $.each(performance, function (index, data) {
+              totalTime += data['Execution Time'];
+            });
+            title += ' ' + totalTime + 'ms';
+            if (moduleSelector) {
+              title += ' \'' + moduleSelector + '\'';
+            }
+            if ((console.group !== undefined || console.table !== undefined) && performance.length > 0) {
+              console.groupCollapsed(title);
+              if (console.table) {
+                console.table(performance);
+              }
+              else {
+                $.each(performance, function (index, data) {
+                  console.log(data['Name'] + ': ' + data['Execution Time'] + 'ms');
+                });
+              }
+              console.groupEnd();
+            }
+            performance = [];
+          }
+        },
+        invoke: function (query, passedArguments, context) {
+          var
+            object = instance,
+            maxDepth,
+            found,
+            response
+            ;
+          passedArguments = passedArguments || queryArguments;
+          context = element || context;
+          if (typeof query == 'string' && object !== undefined) {
+            query = query.split(/[\. ]/);
+            maxDepth = query.length - 1;
+            $.each(query, function (depth, value) {
+              var camelCaseValue = (depth != maxDepth)
+                  ? value + query[depth + 1].charAt(0).toUpperCase() + query[depth + 1].slice(1)
+                  : query
+                ;
+              if ($.isPlainObject(object[camelCaseValue]) && (depth != maxDepth)) {
+                object = object[camelCaseValue];
+              }
+              else if (object[camelCaseValue] !== undefined) {
+                found = object[camelCaseValue];
+                return false;
+              }
+              else if ($.isPlainObject(object[value]) && (depth != maxDepth)) {
+                object = object[value];
+              }
+              else if (object[value] !== undefined) {
+                found = object[value];
+                return false;
+              }
+              else {
+                module.error(error.method, query);
+                return false;
+              }
+            });
+          }
+          if ($.isFunction(found)) {
+            response = found.apply(context, passedArguments);
+          }
+          else if (found !== undefined) {
+            response = found;
+          }
+          if ($.isArray(returnedValue)) {
+            returnedValue.push(response);
+          }
+          else if (returnedValue !== undefined) {
+            returnedValue = [returnedValue, response];
+          }
+          else if (response !== undefined) {
+            returnedValue = response;
+          }
+          return found;
+        }
+      };
+
+      if (methodInvoked) {
+        if (instance === undefined) {
+          module.initialize();
+        }
+        module.invoke(query);
+      }
+      else {
+        if (instance !== undefined) {
+          instance.invoke('destroy');
+        }
+        module.initialize();
+      }
+    })
+  ;
+  return (returnedValue !== undefined)
+    ? returnedValue
+    : this
+    ;
+};
+
+$.fn.calendar.settings = {
+
+  name            : 'Calendar',
+  namespace       : 'calendar',
+
+  silent: false,
+  debug: false,
+  verbose: false,
+  performance: false,
+
+  type           : 'datetime', // picker type, can be 'datetime', 'date', 'time', 'month', or 'year'
+  firstDayOfWeek : 0,          // day for first day column (0 = Sunday)
+  constantHeight : true,       // add rows to shorter months to keep day calendar height consistent (6 rows)
+  today          : false,      // show a 'today/now' button at the bottom of the calendar
+  closable       : true,       // close the popup after selecting a date/time
+  monthFirst     : true,       // month before day when parsing/converting date from/to text
+  touchReadonly  : true,       // set input to readonly on touch devices
+  inline         : false,      // create the calendar inline instead of inside a popup
+  on             : null,       // when to show the popup (defaults to 'focus' for input, 'click' for others)
+  initialDate    : null,       // date to display initially when no date is selected (null = now)
+  startMode      : false,      // display mode to start in, can be 'year', 'month', 'day', 'hour', 'minute' (false = 'day')
+  minDate        : null,       // minimum date/time that can be selected, dates/times before are disabled
+  maxDate        : null,       // maximum date/time that can be selected, dates/times after are disabled
+  ampm           : true,       // show am/pm in time mode
+  disableYear    : false,      // disable year selection mode
+  disableMonth   : false,      // disable month selection mode
+  disableMinute  : false,      // disable minute selection mode
+  formatInput    : true,       // format the input text upon input blur and module creation
+  startCalendar  : null,       // jquery object or selector for another calendar that represents the start date of a date range
+  endCalendar    : null,       // jquery object or selector for another calendar that represents the end date of a date range
+  multiMonth     : 1,          // show multiple months when in 'day' mode
+  showWeekNumbers: null,       // show Number of Week at the very first column of a dayView
+  // popup options ('popup', 'on', 'hoverable', and show/hide callbacks are overridden)
+  popupOptions: {
+    position: 'bottom left',
+    lastResort: 'bottom left',
+    prefer: 'opposite',
+    hideOnScroll: false
+  },
+
+  text: {
+    days: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    monthsShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    today: 'Today',
+    now: 'Now',
+    am: 'AM',
+    pm: 'PM',
+    weekNo: 'Week'
+  },
+
+  formatter: {
+    header: function (date, mode, settings) {
+      return mode === 'year' ? settings.formatter.yearHeader(date, settings) :
+        mode === 'month' ? settings.formatter.monthHeader(date, settings) :
+          mode === 'day' ? settings.formatter.dayHeader(date, settings) :
+            mode === 'hour' ? settings.formatter.hourHeader(date, settings) :
+              settings.formatter.minuteHeader(date, settings);
+    },
+    yearHeader: function (date, settings) {
+      var decadeYear = Math.ceil(date.getFullYear() / 10) * 10;
+      return (decadeYear - 9) + ' - ' + (decadeYear + 2);
+    },
+    monthHeader: function (date, settings) {
+      return date.getFullYear();
+    },
+    dayHeader: function (date, settings) {
+      var month = settings.text.months[date.getMonth()];
+      var year = date.getFullYear();
+      return month + ' ' + year;
+    },
+    hourHeader: function (date, settings) {
+      return settings.formatter.date(date, settings);
+    },
+    minuteHeader: function (date, settings) {
+      return settings.formatter.date(date, settings);
+    },
+    dayColumnHeader: function (day, settings) {
+      return settings.text.days[day];
+    },
+    datetime: function (date, settings) {
+      if (!date) {
+        return '';
+      }
+      var day = settings.type === 'time' ? '' : settings.formatter.date(date, settings);
+      var time = settings.type.indexOf('time') < 0 ? '' : settings.formatter.time(date, settings, false);
+      var separator = settings.type === 'datetime' ? ' ' : '';
+      return day + separator + time;
+    },
+    date: function (date, settings) {
+      if (!date) {
+        return '';
+      }
+      var day = date.getDate();
+      var month = settings.text.months[date.getMonth()];
+      var year = date.getFullYear();
+      return settings.type === 'year' ? year :
+        settings.type === 'month' ? month + ' ' + year :
+        (settings.monthFirst ? month + ' ' + day : day + ' ' + month) + ', ' + year;
+    },
+    time: function (date, settings, forCalendar) {
+      if (!date) {
+        return '';
+      }
+      var hour = date.getHours();
+      var minute = date.getMinutes();
+      var ampm = '';
+      if (settings.ampm) {
+        ampm = ' ' + (hour < 12 ? settings.text.am : settings.text.pm);
+        hour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      }
+      return hour + ':' + (minute < 10 ? '0' : '') + minute + ampm;
+    },
+    today: function (settings) {
+      return settings.type === 'date' ? settings.text.today : settings.text.now;
+    },
+    cell: function (cell, date, cellOptions) {
+    }
+  },
+
+  parser: {
+    date: function (text, settings) {
+      if (!text) {
+        return null;
+      }
+      text = ('' + text).trim().toLowerCase();
+      if (text.length === 0) {
+        return null;
+      }
+
+      var i, j, k;
+      var minute = -1, hour = -1, day = -1, month = -1, year = -1;
+      var isAm = undefined;
+
+      var isTimeOnly = settings.type === 'time';
+      var isDateOnly = settings.type.indexOf('time') < 0;
+
+      var words = text.split(settings.regExp.dateWords);
+      var numbers = text.split(settings.regExp.dateNumbers);
+
+      if (!isDateOnly) {
+        //am/pm
+        isAm = $.inArray(settings.text.am.toLowerCase(), words) >= 0 ? true :
+          $.inArray(settings.text.pm.toLowerCase(), words) >= 0 ? false : undefined;
+
+        //time with ':'
+        for (i = 0; i < numbers.length; i++) {
+          var number = numbers[i];
+          if (number.indexOf(':') >= 0) {
+            if (hour < 0 || minute < 0) {
+              var parts = number.split(':');
+              for (k = 0; k < Math.min(2, parts.length); k++) {
+                j = parseInt(parts[k]);
+                if (isNaN(j)) {
+                  j = 0;
+                }
+                if (k === 0) {
+                  hour = j % 24;
+                } else {
+                  minute = j % 60;
+                }
+              }
+            }
+            numbers.splice(i, 1);
+          }
+        }
+      }
+
+      if (!isTimeOnly) {
+        //textual month
+        for (i = 0; i < words.length; i++) {
+          var word = words[i];
+          if (word.length <= 0) {
+            continue;
+          }
+          word = word.substring(0, Math.min(word.length, 3));
+          for (j = 0; j < settings.text.months.length; j++) {
+            var monthString = settings.text.months[j];
+            monthString = monthString.substring(0, Math.min(word.length, Math.min(monthString.length, 3))).toLowerCase();
+            if (monthString === word) {
+              month = j + 1;
+              break;
+            }
+          }
+          if (month >= 0) {
+            break;
+          }
+        }
+
+        //year > 59
+        for (i = 0; i < numbers.length; i++) {
+          j = parseInt(numbers[i]);
+          if (isNaN(j)) {
+            continue;
+          }
+          if (j > 59) {
+            year = j;
+            numbers.splice(i, 1);
+            break;
+          }
+        }
+
+        //numeric month
+        if (month < 0) {
+          for (i = 0; i < numbers.length; i++) {
+            k = i > 1 || settings.monthFirst ? i : i === 1 ? 0 : 1;
+            j = parseInt(numbers[k]);
+            if (isNaN(j)) {
+              continue;
+            }
+            if (1 <= j && j <= 12) {
+              month = j;
+              numbers.splice(k, 1);
+              break;
+            }
+          }
+        }
+
+        //day
+        for (i = 0; i < numbers.length; i++) {
+          j = parseInt(numbers[i]);
+          if (isNaN(j)) {
+            continue;
+          }
+          if (1 <= j && j <= 31) {
+            day = j;
+            numbers.splice(i, 1);
+            break;
+          }
+        }
+
+        //year <= 59
+        if (year < 0) {
+          for (i = numbers.length - 1; i >= 0; i--) {
+            j = parseInt(numbers[i]);
+            if (isNaN(j)) {
+              continue;
+            }
+            if (j < 99) {
+              j += 2000;
+            }
+            year = j;
+            numbers.splice(i, 1);
+            break;
+          }
+        }
+      }
+
+      if (!isDateOnly) {
+        //hour
+        if (hour < 0) {
+          for (i = 0; i < numbers.length; i++) {
+            j = parseInt(numbers[i]);
+            if (isNaN(j)) {
+              continue;
+            }
+            if (0 <= j && j <= 23) {
+              hour = j;
+              numbers.splice(i, 1);
+              break;
+            }
+          }
+        }
+
+        //minute
+        if (minute < 0) {
+          for (i = 0; i < numbers.length; i++) {
+            j = parseInt(numbers[i]);
+            if (isNaN(j)) {
+              continue;
+            }
+            if (0 <= j && j <= 59) {
+              minute = j;
+              numbers.splice(i, 1);
+              break;
+            }
+          }
+        }
+      }
+
+      if (minute < 0 && hour < 0 && day < 0 && month < 0 && year < 0) {
+        return null;
+      }
+
+      if (minute < 0) {
+        minute = 0;
+      }
+      if (hour < 0) {
+        hour = 0;
+      }
+      if (day < 0) {
+        day = 1;
+      }
+      if (month < 0) {
+        month = 1;
+      }
+      if (year < 0) {
+        year = new Date().getFullYear();
+      }
+
+      if (isAm !== undefined) {
+        if (isAm) {
+          if (hour === 12) {
+            hour = 0;
+          }
+        } else if (hour < 12) {
+          hour += 12;
+        }
+      }
+
+      var date = new Date(year, month - 1, day, hour, minute);
+      if (date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+        //month or year don't match up, switch to last day of the month
+        date = new Date(year, month, 0, hour, minute);
+      }
+      return isNaN(date.getTime()) ? null : date;
+    }
+  },
+
+  // callback when date changes, return false to cancel the change
+  onChange: function (date, text, mode) {
+    return true;
+  },
+
+  // callback before show animation, return false to prevent show
+  onShow: function () {
+  },
+
+  // callback after show animation
+  onVisible: function () {
+  },
+
+  // callback before hide animation, return false to prevent hide
+  onHide: function () {
+  },
+
+  // callback after hide animation
+  onHidden: function () {
+  },
+
+  // is the given date disabled?
+  isDisabled: function (date, mode) {
+    return false;
+  },
+
+  selector: {
+    popup: '.ui.popup',
+    input: 'input',
+    activator: 'input'
+  },
+
+  regExp: {
+    dateWords: /[^A-Za-z\u00C0-\u024F]+/g,
+    dateNumbers: /[^\d:]+/g
+  },
+
+  error: {
+    popup: 'UI Popup, a required component is not included in this page',
+    method: 'The method you called is not defined.'
+  },
+
+  className: {
+    calendar: 'calendar',
+    active: 'active',
+    popup: 'ui popup',
+    grid: 'ui equal width grid',
+    column: 'column',
+    table: 'ui celled center aligned unstackable table',
+    prev: 'prev link',
+    next: 'next link',
+    prevIcon: 'chevron left icon',
+    nextIcon: 'chevron right icon',
+    link: 'link',
+    cell: 'link',
+    disabledCell: 'disabled',
+    adjacentCell: 'adjacent',
+    activeCell: 'active',
+    rangeCell: 'range',
+    focusCell: 'focus',
+    todayCell: 'today',
+    today: 'today link'
+  },
+
+  metadata: {
+    date: 'date',
+    focusDate: 'focusDate',
+    startDate: 'startDate',
+    endDate: 'endDate',
+    minDate: 'minDate',
+    maxDate: 'maxDate',
+    mode: 'mode',
+    monthOffset: 'monthOffset'
+  }
+};
+
+})(jQuery, window, document);
+
+/*!
+ * # Semantic UI 2.6.3 - Checkbox
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -3154,51 +4598,48 @@ $.fn.checkbox = function(parameters) {
 
         should: {
           allowCheck: function() {
-            if(module.is.determinate() && module.is.checked() && !module.should.forceCallbacks() ) {
+            if(module.is.determinate() && module.is.checked() && !module.is.initialLoad() ) {
               module.debug('Should not allow check, checkbox is already checked');
               return false;
             }
-            if(settings.beforeChecked.apply(input) === false) {
+            if(!module.should.ignoreCallbacks() && settings.beforeChecked.apply(input) === false) {
               module.debug('Should not allow check, beforeChecked cancelled');
               return false;
             }
             return true;
           },
           allowUncheck: function() {
-            if(module.is.determinate() && module.is.unchecked() && !module.should.forceCallbacks() ) {
+            if(module.is.determinate() && module.is.unchecked() && !module.is.initialLoad() ) {
               module.debug('Should not allow uncheck, checkbox is already unchecked');
               return false;
             }
-            if(settings.beforeUnchecked.apply(input) === false) {
+            if(!module.should.ignoreCallbacks() && settings.beforeUnchecked.apply(input) === false) {
               module.debug('Should not allow uncheck, beforeUnchecked cancelled');
               return false;
             }
             return true;
           },
           allowIndeterminate: function() {
-            if(module.is.indeterminate() && !module.should.forceCallbacks() ) {
+            if(module.is.indeterminate() && !module.is.initialLoad() ) {
               module.debug('Should not allow indeterminate, checkbox is already indeterminate');
               return false;
             }
-            if(settings.beforeIndeterminate.apply(input) === false) {
+            if(!module.should.ignoreCallbacks() && settings.beforeIndeterminate.apply(input) === false) {
               module.debug('Should not allow indeterminate, beforeIndeterminate cancelled');
               return false;
             }
             return true;
           },
           allowDeterminate: function() {
-            if(module.is.determinate() && !module.should.forceCallbacks() ) {
+            if(module.is.determinate() && !module.is.initialLoad() ) {
               module.debug('Should not allow determinate, checkbox is already determinate');
               return false;
             }
-            if(settings.beforeDeterminate.apply(input) === false) {
+            if(!module.should.ignoreCallbacks() && settings.beforeDeterminate.apply(input) === false) {
               module.debug('Should not allow determinate, beforeDeterminate cancelled');
               return false;
             }
             return true;
-          },
-          forceCallbacks: function() {
-            return (module.is.initialLoad() && settings.fireOnInit);
           },
           ignoreCallbacks: function() {
             return (initialLoad && !settings.fireOnInit);
@@ -3650,7 +5091,7 @@ $.fn.checkbox.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Dimmer
+ * # Semantic UI 2.6.3 - Dimmer
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -3734,7 +5175,6 @@ $.fn.dimmer = function(parameters) {
             else {
               $dimmer = module.create();
             }
-            module.set.variation();
           }
         },
 
@@ -3765,10 +5205,6 @@ $.fn.dimmer = function(parameters) {
 
         bind: {
           events: function() {
-            if(module.is.page()) {
-              // touch events default to passive, due to changes in chrome to optimize mobile perf
-              $dimmable.get(0).addEventListener('touchmove', module.event.preventScroll, { passive: false });
-            }
             if(settings.on == 'hover') {
               $dimmable
                 .on('mouseenter' + eventNamespace, module.show)
@@ -3796,9 +5232,6 @@ $.fn.dimmer = function(parameters) {
 
         unbind: {
           events: function() {
-            if(module.is.page()) {
-              $dimmable.get(0).removeEventListener('touchmove', module.event.preventScroll, { passive: false });
-            }
             $module
               .removeData(moduleNamespace)
             ;
@@ -3815,9 +5248,6 @@ $.fn.dimmer = function(parameters) {
               module.hide();
               event.stopImmediatePropagation();
             }
-          },
-          preventScroll: function(event) {
-            event.preventDefault();
           }
         },
 
@@ -3851,6 +5281,7 @@ $.fn.dimmer = function(parameters) {
             : function(){}
           ;
           module.debug('Showing dimmer', $dimmer, settings);
+          module.set.variation();
           if( (!module.is.dimmed() || module.is.animating()) && module.is.enabled() ) {
             module.animate.show(callback);
             settings.onShow.call(element);
@@ -3883,7 +5314,9 @@ $.fn.dimmer = function(parameters) {
             module.show();
           }
           else {
-            module.hide();
+            if ( module.is.closable() ) {
+              module.hide();
+            }
           }
         },
 
@@ -3894,12 +5327,22 @@ $.fn.dimmer = function(parameters) {
               : function(){}
             ;
             if(settings.useCSS && $.fn.transition !== undefined && $dimmer.transition('is supported')) {
+              if(settings.useFlex) {
+                module.debug('Using flex dimmer');
+                module.remove.legacy();
+              }
+              else {
+                module.debug('Using legacy non-flex dimmer');
+                module.set.legacy();
+              }
               if(settings.opacity !== 'auto') {
                 module.set.opacity();
               }
               $dimmer
                 .transition({
-                  displayType : 'flex',
+                  displayType : settings.useFlex
+                    ? 'flex'
+                    : 'block',
                   animation   : settings.transition + ' in',
                   queue       : false,
                   duration    : module.get.duration(),
@@ -3944,7 +5387,9 @@ $.fn.dimmer = function(parameters) {
               module.verbose('Hiding dimmer with css');
               $dimmer
                 .transition({
-                  displayType : 'flex',
+                  displayType : settings.useFlex
+                    ? 'flex'
+                    : 'block',
                   animation   : settings.transition + ' out',
                   queue       : false,
                   duration    : module.get.duration(),
@@ -3953,6 +5398,7 @@ $.fn.dimmer = function(parameters) {
                     module.remove.dimmed();
                   },
                   onComplete  : function() {
+                    module.remove.variation();
                     module.remove.active();
                     callback();
                   }
@@ -4066,6 +5512,9 @@ $.fn.dimmer = function(parameters) {
             module.debug('Setting opacity to', opacity);
             $dimmer.css('background-color', color);
           },
+          legacy: function() {
+            $dimmer.addClass(className.legacy);
+          },
           active: function() {
             $dimmer.addClass(className.active);
           },
@@ -4094,6 +5543,9 @@ $.fn.dimmer = function(parameters) {
             $dimmer
               .removeClass(className.active)
             ;
+          },
+          legacy: function() {
+            $dimmer.removeClass(className.legacy);
           },
           dimmed: function() {
             $dimmable.removeClass(className.dimmed);
@@ -4308,6 +5760,9 @@ $.fn.dimmer.settings = {
   verbose     : false,
   performance : true,
 
+  // whether should use flex layout
+  useFlex     : true,
+
   // name to distinguish between multiple dimmers in context
   dimmerName  : false,
 
@@ -4351,6 +5806,7 @@ $.fn.dimmer.settings = {
     dimmer     : 'dimmer',
     disabled   : 'disabled',
     hide       : 'hide',
+    legacy     : 'legacy',
     pageDimmer : 'page',
     show       : 'show'
   },
@@ -4371,7 +5827,7 @@ $.fn.dimmer.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Dropdown
+ * # Semantic UI 2.6.3 - Dropdown
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -4436,6 +5892,7 @@ $.fn.dropdown = function(parameters) {
         $sizer          = $module.find(selector.sizer),
         $input          = $module.find(selector.input),
         $icon           = $module.find(selector.icon),
+        $clear          = $module.find(selector.clearIcon),
 
         $combo = ($module.prev().find(selector.text).length > 0)
           ? $module.prev().find(selector.text)
@@ -4443,6 +5900,7 @@ $.fn.dropdown = function(parameters) {
 
         $menu           = $module.children(selector.menu),
         $item           = $menu.find(selector.item),
+        $divider        = settings.hideDividers ? $item.parent().children(selector.divider) : $(),
 
         activated       = false,
         itemActivated   = false,
@@ -4693,6 +6151,13 @@ $.fn.dropdown = function(parameters) {
             if( !module.has.menu() ) {
               module.create.menu();
             }
+            if ( module.is.selection() && module.is.clearable() && !module.has.clearItem() ) {
+              module.verbose('Adding clear icon');
+              $clear = $('<i />')
+                .addClass('remove icon')
+                .insertBefore($text)
+              ;
+            }
             if( module.is.search() && !module.has.search() ) {
               module.verbose('Adding search input');
               $search = $('<input />')
@@ -4756,7 +6221,8 @@ $.fn.dropdown = function(parameters) {
           },
           menu: function(values) {
             $menu.html( templates.menu(values, fields));
-            $item = $menu.find(selector.item);
+            $item    = $menu.find(selector.item);
+            $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
           },
           reference: function() {
             module.debug('Dropdown behavior was called on select, replacing with closest dropdown');
@@ -4783,7 +6249,8 @@ $.fn.dropdown = function(parameters) {
         },
 
         refreshItems: function() {
-          $item = $menu.find(selector.item);
+          $item    = $menu.find(selector.item);
+          $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
         },
 
         refreshSelectors: function() {
@@ -4798,6 +6265,7 @@ $.fn.dropdown = function(parameters) {
           ;
           $menu    = $module.children(selector.menu);
           $item    = $menu.find(selector.item);
+          $divider = settings.hideDividers ? $item.parent().children(selector.divider) : $();
         },
 
         refreshData: function() {
@@ -4853,7 +6321,7 @@ $.fn.dropdown = function(parameters) {
                 if( module.can.click() ) {
                   module.bind.intent();
                 }
-                if(module.has.menuSearch()) {
+                if(module.has.search()) {
                   module.focusSearch();
                 }
                 module.set.visible();
@@ -4873,6 +6341,10 @@ $.fn.dropdown = function(parameters) {
             if(settings.onHide.call(element) !== false) {
               module.animate.hide(function() {
                 module.remove.visible();
+                // hidding search focus
+                if ( module.is.focusedOnSearch() ) {
+                  $search.blur();
+                }
                 callback.call(element);
               });
             }
@@ -4963,6 +6435,7 @@ $.fn.dropdown = function(parameters) {
                 .on('mousedown' + eventNamespace, selector.menu,   module.event.menu.mousedown)
                 .on('mouseup'   + eventNamespace, selector.menu,   module.event.menu.mouseup)
                 .on('click'     + eventNamespace, selector.icon,   module.event.icon.click)
+                .on('click'     + eventNamespace, selector.clearIcon, module.event.clearIcon.click)
                 .on('focus'     + eventNamespace, selector.search, module.event.search.focus)
                 .on('click'     + eventNamespace, selector.search, module.event.search.focus)
                 .on('blur'      + eventNamespace, selector.search, module.event.search.blur)
@@ -4996,6 +6469,7 @@ $.fn.dropdown = function(parameters) {
                 .on('mousedown' + eventNamespace, module.event.mousedown)
                 .on('mouseup'   + eventNamespace, module.event.mouseup)
                 .on('focus'     + eventNamespace, module.event.focus)
+                .on('click'     + eventNamespace, selector.clearIcon, module.event.clearIcon.click)
               ;
               if(module.has.menuSearch() ) {
                 $module
@@ -5215,6 +6689,30 @@ $.fn.dropdown = function(parameters) {
               .addClass(className.filtered)
             ;
           }
+
+          if(!module.has.query()) {
+            $divider
+              .removeClass(className.hidden);
+          } else if(settings.hideDividers === true) {
+            $divider
+              .addClass(className.hidden);
+          } else if(settings.hideDividers === 'empty') {
+            $divider
+              .removeClass(className.hidden)
+              .filter(function() {
+                // First find the last divider in this divider group
+                // Dividers which are direct siblings are considered a group
+                var lastDivider = $(this).nextUntil(selector.item);
+
+                return (lastDivider.length ? lastDivider : $(this))
+                // Count all non-filtered items until the next divider (or end of the dropdown)
+                  .nextUntil(selector.divider)
+                  .filter(selector.item + ":not(." + className.filtered + ")")
+                  // Hide divider if no items are found
+                  .length === 0;
+              })
+              .addClass(className.hidden);
+          }
         },
 
         fuzzySearch: function(query, term) {
@@ -5269,6 +6767,12 @@ $.fn.dropdown = function(parameters) {
             else {
               $search.focus();
             }
+          }
+        },
+
+        blurSearch: function() {
+          if( module.has.search() ) {
+            $search.blur();
           }
         },
 
@@ -5389,9 +6893,27 @@ $.fn.dropdown = function(parameters) {
               willRefocus = false;
             }
           },
+          clearIcon: {
+            click: function(event) {
+              module.clear();
+              if(module.is.searchSelection()) {
+                module.remove.searchTerm();
+              }
+              module.hide();
+              event.stopPropagation();
+            }
+          },
           icon: {
             click: function(event) {
-              module.toggle();
+              if(module.has.search()) {
+                if(!module.is.active()) {
+                  module.focusSearch();
+                } else {
+                  module.blurSearch();
+                }
+              } else {
+                module.toggle();
+              }
             }
           },
           text: {
@@ -5482,16 +7004,7 @@ $.fn.dropdown = function(parameters) {
           select: {
             mutation: function(mutations) {
               module.debug('<select> modified, recreating menu');
-              var
-                isSelectMutation = false
-              ;
-              $.each(mutations, function(index, mutation) {
-                if($(mutation.target).is('select') || $(mutation.addedNodes).is('select')) {
-                  isSelectMutation = true;
-                  return true;
-                }
-              });
-              if(isSelectMutation) {
+              if(module.is.selectMutation(mutations)) {
                 module.disconnect.selectObserver();
                 module.refresh();
                 module.setup.select();
@@ -5764,6 +7277,9 @@ $.fn.dropdown = function(parameters) {
                     module.event.item.click.call($selectedItem, event);
                     if(module.is.searchSelection()) {
                       module.remove.searchTerm();
+                      if(module.is.multiple()) {
+                          $search.focus();
+                      }
                     }
                   }
                   event.preventDefault();
@@ -6018,7 +7534,7 @@ $.fn.dropdown = function(parameters) {
           },
 
           hide: function(text, value, element) {
-            module.set.value(value, text);
+            module.set.value(value, text, $(element));
             module.hideAndClear();
           }
 
@@ -6245,12 +7761,23 @@ $.fn.dropdown = function(parameters) {
               select.placeholder = settings.placeholder;
             }
             if(settings.sortSelect) {
-              select.values.sort(function(a, b) {
-                return (a.name > b.name)
-                  ? 1
-                  : -1
-                ;
-              });
+              if(settings.sortSelect === true) {
+                select.values.sort(function(a, b) {
+                  return (a.name > b.name)
+                    ? 1
+                    : -1
+                    ;
+                });
+              } else if(settings.sortSelect === 'natural') {
+                select.values.sort(function(a, b) {
+                  return (a.name.toLowerCase() > b.name.toLowerCase())
+                    ? 1
+                    : -1
+                    ;
+                });
+              } else if($.isFunction(settings.sortSelect)) {
+                select.values.sort(settings.sortSelect);
+              }
               module.debug('Retrieved and sorted values from select', select);
             }
             else {
@@ -6318,7 +7845,7 @@ $.fn.dropdown = function(parameters) {
                     return;
                   }
                   if(isMultiple) {
-                    if($.inArray( String(optionValue), value) !== -1 || $.inArray(optionText, value) !== -1) {
+                    if($.inArray( String(optionValue), value) !== -1) {
                       $selectedItem = ($selectedItem)
                         ? $selectedItem.add($choice)
                         : $choice
@@ -6327,13 +7854,13 @@ $.fn.dropdown = function(parameters) {
                   }
                   else if(strict) {
                     module.verbose('Ambiguous dropdown value using strict type check', $choice, value);
-                    if( optionValue === value || optionText === value) {
+                    if( optionValue === value) {
                       $selectedItem = $choice;
                       return true;
                     }
                   }
                   else {
-                    if( String(optionValue) == String(value) || optionText == value) {
+                    if( String(optionValue) == String(value)) {
                       module.verbose('Found select item by value', optionValue, value);
                       $selectedItem = $choice;
                       return true;
@@ -6709,30 +8236,28 @@ $.fn.dropdown = function(parameters) {
             }
           },
           text: function(text) {
-            if(settings.action !== 'select') {
-              if(settings.action == 'combo') {
-                module.debug('Changing combo button text', text, $combo);
-                if(settings.preserveHTML) {
-                  $combo.html(text);
-                }
-                else {
-                  $combo.text(text);
-                }
+            if(settings.action === 'combo') {
+              module.debug('Changing combo button text', text, $combo);
+              if(settings.preserveHTML) {
+                $combo.html(text);
               }
               else {
-                if(text !== module.get.placeholderText()) {
-                  $text.removeClass(className.placeholder);
-                }
-                module.debug('Changing text', text, $text);
-                $text
-                  .removeClass(className.filtered)
-                ;
-                if(settings.preserveHTML) {
-                  $text.html(text);
-                }
-                else {
-                  $text.text(text);
-                }
+                $combo.text(text);
+              }
+            }
+            else if(settings.action === 'activate') {
+              if(text !== module.get.placeholderText()) {
+                $text.removeClass(className.placeholder);
+              }
+              module.debug('Changing text', text, $text);
+              $text
+                .removeClass(className.filtered)
+              ;
+              if(settings.preserveHTML) {
+                $text.html(text);
+              }
+              else {
+                $text.text(text);
               }
             }
           },
@@ -6948,7 +8473,7 @@ $.fn.dropdown = function(parameters) {
                 }
               })
             ;
-          }
+          },
         },
 
         add: {
@@ -7146,7 +8671,7 @@ $.fn.dropdown = function(parameters) {
             }
             module.set.value(newValue, addedValue, addedText, $selectedItem);
             module.check.maxSelections();
-          }
+          },
         },
 
         remove: {
@@ -7188,6 +8713,9 @@ $.fn.dropdown = function(parameters) {
             }
             else {
               $item.removeClass(className.filtered);
+            }
+            if(settings.hideDividers) {
+              $divider.removeClass(className.hidden);
             }
             module.remove.empty();
           },
@@ -7371,12 +8899,15 @@ $.fn.dropdown = function(parameters) {
                 .removeAttr('tabindex')
               ;
             }
-          }
+          },
         },
 
         has: {
           menuSearch: function() {
             return (module.has.search() && $search.closest($menu).length > 0);
+          },
+          clearItem: function() {
+            return ($clear.length > 0);
           },
           search: function() {
             return ($search.length > 0);
@@ -7512,6 +9043,9 @@ $.fn.dropdown = function(parameters) {
             var $selectedMenu = $subMenu || $menu;
             return $selectedMenu.hasClass(className.leftward);
           },
+          clearable: function() {
+            return ($module.hasClass(className.clearable) || settings.clearable);
+          },
           disabled: function() {
             return $module.hasClass(className.disabled);
           },
@@ -7556,9 +9090,9 @@ $.fn.dropdown = function(parameters) {
               selectChanged = false
             ;
             $.each(mutations, function(index, mutation) {
-              if(mutation.target && $(mutation.target).is('select')) {
+              if($(mutation.target).is('select') || $(mutation.addedNodes).is('select')) {
                 selectChanged = true;
-                return true;
+                return false;
               }
             });
             return selectChanged;
@@ -8058,6 +9592,8 @@ $.fn.dropdown.settings = {
 
   values                 : false,      // specify values to use for dropdown
 
+  clearable              : false,      // whether the value of the dropdown can be cleared
+
   apiSettings            : false,
   selectOnKeydown        : true,       // Whether selection should occur automatically when keyboard shortcuts used
   minCharacters          : 0,          // Minimum characters required to trigger API call
@@ -8073,6 +9609,7 @@ $.fn.dropdown.settings = {
 
   match                  : 'both',     // what to match against with search selection (both, text, or label)
   fullTextSearch         : false,      // search anywhere in value (set to 'exact' to require exact matches)
+  hideDividers           : false,      // Whether to hide any divider elements (specified in selector.divider) that are sibling to any items when searched (set to true will hide all dividers, set to 'empty' will hide them when they are not followed by a visible item)
 
   placeholder            : 'auto',     // whether to convert blank <select> values to placeholder text
   preserveHTML           : true,       // preserve html when selecting value
@@ -8170,7 +9707,8 @@ $.fn.dropdown.settings = {
     disabled     : 'disabled', // whether value should be disabled
     name         : 'name',     // displayed dropdown text
     value        : 'value',    // actual dropdown value
-    text         : 'text'      // displayed text when selected
+    text         : 'text',     // displayed text when selected
+    type         : 'type'      // type of dropdown element
   },
 
   keys : {
@@ -8189,6 +9727,7 @@ $.fn.dropdown.settings = {
 
   selector : {
     addition     : '.addition',
+    divider      : '.divider, .header',
     dropdown     : '.ui.dropdown',
     hidden       : '.hidden',
     icon         : '> .dropdown.icon',
@@ -8203,7 +9742,8 @@ $.fn.dropdown.settings = {
     search       : 'input.search, .menu > .search > input, .menu input.search',
     sizer        : '> input.sizer',
     text         : '> .text:not(.icon)',
-    unselectable : '.disabled, .filtered'
+    unselectable : '.disabled, .filtered',
+    clearIcon    : '> .remove.icon'
   },
 
   className : {
@@ -8228,7 +9768,8 @@ $.fn.dropdown.settings = {
     selection   : 'selection',
     upward      : 'upward',
     leftward    : 'left',
-    visible     : 'visible'
+    visible     : 'visible',
+    clearable   : 'clearable'
   }
 
 };
@@ -8269,16 +9810,28 @@ $.fn.dropdown.settings.templates = {
     ;
     $.each(values, function(index, option) {
       var
-        maybeText = (option[fields.text])
-          ? 'data-text="' + option[fields.text] + '"'
-          : '',
-        maybeDisabled = (option[fields.disabled])
-          ? 'disabled '
-          : ''
+        itemType = (option[fields.type])
+          ? option[fields.type]
+          : 'item'
       ;
-      html += '<div class="'+ maybeDisabled +'item" data-value="' + option[fields.value] + '"' + maybeText + '>';
-      html +=   option[fields.name];
-      html += '</div>';
+
+      if( itemType === 'item' ) {
+        var
+          maybeText = (option[fields.text])
+            ? 'data-text="' + option[fields.text] + '"'
+            : '',
+          maybeDisabled = (option[fields.disabled])
+            ? 'disabled '
+            : ''
+        ;
+        html += '<div class="'+ maybeDisabled +'item" data-value="' + option[fields.value] + '"' + maybeText + '>';
+        html +=   option[fields.name];
+        html += '</div>';
+      } else if (itemType === 'header') {
+        html += '<div class="header">';
+        html +=   option[fields.name];
+        html += '</div>';
+      }
     });
     return html;
   },
@@ -8304,7 +9857,7 @@ $.fn.dropdown.settings.templates = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Embed
+ * # Semantic UI 2.6.3 - Embed
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -8315,7 +9868,7 @@ $.fn.dropdown.settings.templates = {
 
 ;(function ($, window, document, undefined) {
 
-'use strict';
+"use strict";
 
 window = (typeof window != 'undefined' && window.Math == Math)
   ? window
@@ -8486,6 +10039,7 @@ $.fn.embed = function(parameters) {
         // clears embed
         reset: function() {
           module.debug('Clearing embed and showing placeholder');
+          module.remove.data();
           module.remove.active();
           module.remove.embed();
           module.showPlaceholder();
@@ -8605,6 +10159,15 @@ $.fn.embed = function(parameters) {
         },
 
         remove: {
+          data: function() {
+            $module
+              .removeData(metadata.id)
+              .removeData(metadata.icon)
+              .removeData(metadata.placeholder)
+              .removeData(metadata.source)
+              .removeData(metadata.url)
+            ;
+          },
           active: function() {
             $module.removeClass(className.active);
           },
@@ -9001,7 +10564,7 @@ $.fn.embed.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Modal
+ * # Semantic UI 2.6.3 - Modal
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -9076,6 +10639,8 @@ $.fn.modal = function(parameters) {
 
         ignoreRepeatedEvents = false,
 
+        initialMouseDownInModal,
+
         elementEventNamespace,
         id,
         observer,
@@ -9088,6 +10653,11 @@ $.fn.modal = function(parameters) {
 
           module.create.id();
           module.create.dimmer();
+
+          if ( settings.allowMultiple ) {
+            module.create.innerDimmer();
+          }
+
           module.refreshModals();
 
           module.bind.events();
@@ -9112,8 +10682,7 @@ $.fn.modal = function(parameters) {
                 debug      : settings.debug,
                 variation  : settings.centered
                   ? false
-                  : 'top aligned'
-                ,
+                  : 'top aligned',
                 dimmerName : 'modals'
               },
               dimmerSettings = $.extend(true, defaultSettings, settings.dimmerSettings)
@@ -9134,9 +10703,14 @@ $.fn.modal = function(parameters) {
             $dimmer = $dimmable.dimmer('get dimmer');
           },
           id: function() {
-            id = (Math.random().toString(16) + '000000000').substr(2,8);
+            id = (Math.random().toString(16) + '000000000').substr(2, 8);
             elementEventNamespace = '.' + id;
             module.verbose('Creating unique id for element', id);
+          },
+          innerDimmer: function() {
+            if ( $module.find(selector.dimmer).length == 0 ) {
+              $module.prepend('<div class="ui inverted dimmer"></div>');
+            }
           }
         },
 
@@ -9169,6 +10743,9 @@ $.fn.modal = function(parameters) {
         refresh: function() {
           module.remove.scrolling();
           module.cacheSizes();
+          if(!module.can.useFlex()) {
+            module.set.modalOffset();
+          }
           module.set.screenHeight();
           module.set.type();
         },
@@ -9209,12 +10786,22 @@ $.fn.modal = function(parameters) {
             $window
               .on('resize' + elementEventNamespace, module.event.resize)
             ;
+          },
+          scrollLock: function() {
+            // touch events default to passive, due to changes in chrome to optimize mobile perf
+            $dimmable.get(0).addEventListener('touchmove', module.event.preventScroll, { passive: false });
+          }
+        },
+
+        unbind: {
+          scrollLock: function() {
+            $dimmable.get(0).removeEventListener('touchmove', module.event.preventScroll, { passive: false });
           }
         },
 
         get: {
           id: function() {
-            return (Math.random().toString(16) + '000000000').substr(2,8);
+            return (Math.random().toString(16) + '000000000').substr(2, 8);
           }
         },
 
@@ -9229,6 +10816,9 @@ $.fn.modal = function(parameters) {
               ignoreRepeatedEvents = false;
             });
           },
+          preventScroll: function(event) {
+            event.preventDefault();
+          },
           deny: function() {
             if(ignoreRepeatedEvents || settings.onDeny.call(element, $(this)) === false) {
               module.verbose('Deny callback returned false cancelling hide');
@@ -9242,9 +10832,22 @@ $.fn.modal = function(parameters) {
           close: function() {
             module.hide();
           },
-          click: function(event) {
+          mousedown: function(event) {
+            var
+              $target   = $(event.target)
+            ;
+            initialMouseDownInModal = ($target.closest(selector.modal).length > 0);
+            if(initialMouseDownInModal) {
+              module.verbose('Mouse down event registered inside the modal');
+            }
+          },
+          mouseup: function(event) {
             if(!settings.closable) {
               module.verbose('Dimmer clicked but closable setting is disabled');
+              return;
+            }
+            if(initialMouseDownInModal) {
+              module.debug('Dimmer clicked but mouse down was initially registered inside the modal');
               return;
             }
             var
@@ -9256,10 +10859,10 @@ $.fn.modal = function(parameters) {
               module.debug('Dimmer clicked, hiding all modals');
               module.remove.clickaway();
               if(settings.allowMultiple) {
-                module.hide();
+                module.hideAll();
               }
               else {
-                module.hideAll();
+                module.hide();
               }
             }
           },
@@ -9275,7 +10878,9 @@ $.fn.modal = function(parameters) {
             if(keyCode == escapeKey) {
               if(settings.closable) {
                 module.debug('Escape key pressed hiding modal');
-                module.hide();
+                if ( $module.hasClass(className.top) ) {
+                  module.hide();
+                }
               }
               else {
                 module.debug('Escape key pressed, but closable is set to false');
@@ -9306,6 +10911,8 @@ $.fn.modal = function(parameters) {
           ;
           module.refreshModals();
           module.set.dimmerSettings();
+          module.set.dimmerStyles();
+
           module.showModal(callback);
         },
 
@@ -9324,9 +10931,16 @@ $.fn.modal = function(parameters) {
             : function(){}
           ;
           if( module.is.animating() || !module.is.active() ) {
-
             module.showDimmer();
             module.cacheSizes();
+            if(module.can.useFlex()) {
+              module.remove.legacy();
+            }
+            else {
+              module.set.legacy();
+              module.set.modalOffset();
+              module.debug('Using non-flex legacy modal positioning.');
+            }
             module.set.screenHeight();
             module.set.type();
             module.set.clickaway();
@@ -9335,8 +10949,14 @@ $.fn.modal = function(parameters) {
               module.hideOthers(module.showModal);
             }
             else {
-              if(settings.allowMultiple && settings.detachable) {
-                $module.detach().appendTo($dimmer);
+              if( settings.allowMultiple ) {
+                if ( module.others.active() ) {
+                  $otherModals.filter('.' + className.active).find(selector.dimmer).addClass('active')
+                }
+
+                if ( settings.detachable ) {
+                  $module.detach().appendTo($dimmer);
+                }
               }
               settings.onShow.call(element);
               if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
@@ -9373,7 +10993,10 @@ $.fn.modal = function(parameters) {
           }
         },
 
-        hideModal: function(callback, keepDimmed) {
+        hideModal: function(callback, keepDimmed, hideOthersToo) {
+          var
+            $previousModal = $otherModals.filter('.' + className.active).last()
+          ;
           callback = $.isFunction(callback)
             ? callback
             : function(){}
@@ -9398,12 +11021,24 @@ $.fn.modal = function(parameters) {
                     if(!module.others.active() && !keepDimmed) {
                       module.hideDimmer();
                     }
-                    if(settings.keyboardShortcuts) {
+                    if( settings.keyboardShortcuts && !module.others.active() ) {
                       module.remove.keyboardShortcuts();
                     }
                   },
                   onComplete : function() {
+                    if ( settings.allowMultiple ) {
+                      $previousModal.addClass(className.top);
+                      $module.removeClass(className.top);
+      
+                      if ( hideOthersToo ) {
+                        $allModals.find(selector.dimmer).removeClass('active')
+                      }
+                      else {
+                        $previousModal.find(selector.dimmer).removeClass('active')
+                      }
+                    }
                     settings.onHidden.call(element);
+                    module.remove.dimmerStyles();
                     module.restore.focus();
                     callback();
                   }
@@ -9428,6 +11063,7 @@ $.fn.modal = function(parameters) {
 
         hideDimmer: function() {
           if( $dimmable.dimmer('is animating') || ($dimmable.dimmer('is active')) ) {
+            module.unbind.scrollLock();
             $dimmable.dimmer('hide', function() {
               module.remove.clickaway();
               module.remove.screenHeight();
@@ -9451,7 +11087,7 @@ $.fn.modal = function(parameters) {
             module.debug('Hiding all visible modals');
             module.hideDimmer();
             $visibleModals
-              .modal('hide modal', callback)
+              .modal('hide modal', callback, false, true)
             ;
           }
         },
@@ -9515,10 +11151,20 @@ $.fn.modal = function(parameters) {
           active: function() {
             $module.removeClass(className.active);
           },
+          legacy: function() {
+            $module.removeClass(className.legacy);
+          },
           clickaway: function() {
             $dimmer
-              .off('click' + elementEventNamespace)
+              .off('mousedown' + elementEventNamespace)
             ;
+            $dimmer
+              .off('mouseup' + elementEventNamespace)
+            ;
+          },
+          dimmerStyles: function() {
+            $dimmer.removeClass(className.inverted);
+            $dimmable.removeClass(className.blurring);
           },
           bodyStyle: function() {
             if($body.attr('style') === '') {
@@ -9548,11 +11194,13 @@ $.fn.modal = function(parameters) {
           $module.addClass(className.loading);
           var
             scrollHeight = $module.prop('scrollHeight'),
+            modalWidth   = $module.outerWidth(),
             modalHeight  = $module.outerHeight()
           ;
           if(module.cache === undefined || modalHeight !== 0) {
             module.cache = {
               pageHeight    : $(document).outerHeight(),
+              width         : modalWidth,
               height        : modalHeight + settings.offset,
               scrollHeight  : scrollHeight + settings.offset,
               contextHeight : (settings.context == 'body')
@@ -9566,6 +11214,12 @@ $.fn.modal = function(parameters) {
         },
 
         can: {
+          useFlex: function() {
+            return (settings.useFlex == 'auto')
+              ? settings.detachable && !module.is.ie()
+              : settings.useFlex
+            ;
+          },
           fit: function() {
             var
               contextHeight  = module.cache.contextHeight,
@@ -9587,6 +11241,13 @@ $.fn.modal = function(parameters) {
           active: function() {
             return $module.hasClass(className.active);
           },
+          ie: function() {
+            var
+              isIE11 = (!(window.ActiveXObject) && 'ActiveXObject' in window),
+              isIE   = ('ActiveXObject' in window)
+            ;
+            return (isIE11 || isIE);
+          },
           animating: function() {
             return $module.transition('is supported')
               ? $module.transition('is animating')
@@ -9598,7 +11259,7 @@ $.fn.modal = function(parameters) {
           },
           modernBrowser: function() {
             // appName for IE11 reports 'Netscape' can no longer use
-            return !(window.ActiveXObject || "ActiveXObject" in window);
+            return !(window.ActiveXObject || 'ActiveXObject' in window);
           }
         },
 
@@ -9617,7 +11278,10 @@ $.fn.modal = function(parameters) {
           },
           clickaway: function() {
             $dimmer
-              .on('click' + elementEventNamespace, module.event.click)
+              .on('mousedown' + elementEventNamespace, module.event.mousedown)
+            ;
+            $dimmer
+              .on('mouseup' + elementEventNamespace, module.event.mouseup)
             ;
           },
           dimmerSettings: function() {
@@ -9630,10 +11294,10 @@ $.fn.modal = function(parameters) {
                 debug      : settings.debug,
                 dimmerName : 'modals',
                 closable   : 'auto',
+                useFlex    : module.can.useFlex(),
                 variation  : settings.centered
                   ? false
-                  : 'top aligned'
-                ,
+                  : 'top aligned',
                 duration   : {
                   show     : settings.duration,
                   hide     : settings.duration
@@ -9646,6 +11310,11 @@ $.fn.modal = function(parameters) {
                 ? dimmerSettings.variation + ' inverted'
                 : 'inverted'
               ;
+            }
+            $context.dimmer('setting', dimmerSettings);
+          },
+          dimmerStyles: function() {
+            if(settings.inverted) {
               $dimmer.addClass(className.inverted);
             }
             else {
@@ -9657,7 +11326,21 @@ $.fn.modal = function(parameters) {
             else {
               $dimmable.removeClass(className.blurring);
             }
-            $context.dimmer('setting', dimmerSettings);
+          },
+          modalOffset: function() {
+            var
+              width = module.cache.width,
+              height = module.cache.height
+            ;
+            $module
+              .css({
+                marginTop: (settings.centered && module.can.fit())
+                  ? -(height / 2)
+                  : 0,
+                marginLeft: -(width / 2)
+              })
+            ;
+            module.verbose('Setting modal offset for legacy mode');
           },
           screenHeight: function() {
             if( module.can.fit() ) {
@@ -9671,17 +11354,23 @@ $.fn.modal = function(parameters) {
             }
           },
           active: function() {
-            $module.addClass(className.active);
+            $module.addClass(className.active + ' ' + className.top);
+            $otherModals.filter('.' + className.active).removeClass(className.top)
           },
           scrolling: function() {
             $dimmable.addClass(className.scrolling);
             $module.addClass(className.scrolling);
+            module.unbind.scrollLock();
+          },
+          legacy: function() {
+            $module.addClass(className.legacy);
           },
           type: function() {
             if(module.can.fit()) {
               module.verbose('Modal fits on screen');
               if(!module.others.active() && !module.others.animating()) {
                 module.remove.scrolling();
+                module.bind.scrollLock();
               }
             }
             else {
@@ -9882,6 +11571,9 @@ $.fn.modal.settings = {
   name           : 'Modal',
   namespace      : 'modal',
 
+  useFlex        : 'auto',
+  offset         : 0,
+
   silent         : false,
   debug          : false,
   verbose        : false,
@@ -9911,7 +11603,6 @@ $.fn.modal.settings = {
 
   queue      : false,
   duration   : 500,
-  offset     : 0,
   transition : 'scale',
 
   // padding with edge of page
@@ -9939,7 +11630,8 @@ $.fn.modal.settings = {
     close    : '> .close',
     approve  : '.actions .positive, .actions .approve, .actions .ok',
     deny     : '.actions .negative, .actions .deny, .actions .cancel',
-    modal    : '.ui.modal'
+    modal    : '.ui.modal',
+    dimmer   : '> .ui.dimmer'
   },
   error : {
     dimmer    : 'UI Dimmer, a required component is not included in this page',
@@ -9951,9 +11643,11 @@ $.fn.modal.settings = {
     animating  : 'animating',
     blurring   : 'blurring',
     inverted   : 'inverted',
+    legacy     : 'legacy',
     loading    : 'loading',
     scrolling  : 'scrolling',
-    undetached : 'undetached'
+    undetached : 'undetached',
+    top        : 'top'
   }
 };
 
@@ -9961,7 +11655,7 @@ $.fn.modal.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Nag
+ * # Semantic UI 2.6.3 - Nag
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -10469,7 +12163,7 @@ $.extend( $.easing, {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Popup
+ * # Semantic UI 2.6.3 - Popup
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -11482,11 +13176,11 @@ $.fn.popup = function(parameters) {
             if(settings.hideOnScroll === true || (settings.hideOnScroll == 'auto' && settings.on != 'click')) {
               module.bind.closeOnScroll();
             }
-            if(settings.on == 'hover' && openedWithTouch) {
-              module.bind.touchClose();
-            }
-            if(settings.on == 'click' && settings.closable) {
+            if(module.is.closable()) {
               module.bind.clickaway();
+            }
+            else if(settings.on == 'hover' && openedWithTouch) {
+              module.bind.touchClose();
             }
           },
           closeOnScroll: function() {
@@ -11543,10 +13237,19 @@ $.fn.popup = function(parameters) {
         should: {
           centerArrow: function(calculations) {
             return !module.is.basic() && calculations.target.width <= (settings.arrowPixelsFromEdge * 2);
-          }
+          },
         },
 
         is: {
+          closable: function() {
+            if(settings.closable == 'auto') {
+              if(settings.on == 'hover') {
+                return false;
+              }
+              return true;
+            }
+            return settings.closable;
+          },
           offstage: function(distanceFromBoundary, position) {
             var
               offstage = []
@@ -11993,7 +13696,7 @@ $.fn.popup.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Progress
+ * # Semantic UI 2.6.3 - Progress
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -12011,14 +13714,6 @@ window = (typeof window != 'undefined' && window.Math == Math)
   : (typeof self != 'undefined' && self.Math == Math)
     ? self
     : Function('return this')()
-;
-
-var
-  global = (typeof window != 'undefined' && window.Math == Math)
-    ? window
-    : (typeof self != 'undefined' && self.Math == Math)
-      ? self
-      : Function('return this')()
 ;
 
 $.fn.progress = function(parameters) {
@@ -12925,7 +14620,286 @@ $.fn.progress.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Rating
+ * # Semantic UI 2.6.3 - Range
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ( $, window, document, undefined ) {
+  
+  "use strict";
+  
+  $.fn.range = function(parameters) {
+    
+    var
+      $allModules    = $(this),
+      
+      offset         = 10,
+      
+      query          = arguments[0],
+      methodInvoked  = (typeof query == 'string'),
+      queryArguments = [].slice.call(arguments, 1)
+    ;
+    
+    $allModules
+      .each(function() {
+        
+        var
+          settings          = ( $.isPlainObject(parameters) )
+            ? $.extend(true, {}, $.fn.range.settings, parameters)
+            : $.extend({}, $.fn.range.settings),
+          
+          namespace       = settings.namespace,
+          min             = settings.min,
+          max             = settings.max,
+          step            = settings.step,
+          start           = settings.start,
+          input           = settings.input,
+          
+          eventNamespace  = '.' + namespace,
+          moduleNamespace = 'module-' + namespace,
+          
+          $module         = $(this),
+          
+          element         = this,
+          instance        = $module.data(moduleNamespace),
+          
+          inner,
+          thumb,
+          trackLeft,
+          precision,
+          
+          module
+        ;
+        
+        module = {
+          
+          initialize: function() {
+            module.instantiate();
+            module.sanitize();
+          },
+          
+          instantiate: function() {
+            instance = module;
+            $module
+              .data(moduleNamespace, module)
+            ;
+            $(element).html("<div class='inner'><div class='track'></div><div class='track-fill'></div><div class='thumb'></div></div>");
+            inner = $(element).children('.inner')[0];
+            thumb = $(element).find('.thumb')[0];
+            trackLeft = $(element).find('.track-fill')[0];
+            // find precision of step, used in calculating the value
+            module.determinePrecision();
+            // set start location
+            module.setValuePosition(settings.start);
+            // event listeners
+            $(element).find('.track, .thumb, .inner').on('mousedown', function(event) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+              $(this).closest(".range").trigger('mousedown', event);
+            });
+            $(element).find('.track, .thumb, .inner').on('touchstart', function(event) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+              $(this).closest(".range").trigger('touchstart', event);
+            });
+            $(element).on('mousedown', function(event, originalEvent) {
+              module.rangeMousedown(event, false, originalEvent);
+            });
+            $(element).on('touchstart', function(event, originalEvent) {
+              module.rangeMousedown(event, true, originalEvent);
+            });
+            module.addVisibilityListener(element);
+          },
+          
+          sanitize: function() {
+            if (typeof settings.min != 'number') {
+              settings.min = parseInt(settings.min) || 0;
+            }
+            if (typeof settings.max != 'number') {
+              settings.max = parseInt(settings.max) || false;
+            }
+            if (typeof settings.start != 'number') {
+              settings.start = parseInt(settings.start) || 0;
+            }
+          },
+          
+          determinePrecision: function() {
+            var split = String(settings.step).split('.');
+            var decimalPlaces;
+            if(split.length == 2) {
+              decimalPlaces = split[1].length;
+            } else {
+              decimalPlaces = 0;
+            }
+            precision = Math.pow(10, decimalPlaces);
+          },
+          
+          determineValue: function(startPos, endPos, currentPos) {
+            var ratio = (currentPos - startPos) / (endPos - startPos);
+            var range = settings.max - settings.min;
+            var difference = Math.round(ratio * range / step) * step;
+            // Use precision to avoid ugly Javascript floating point rounding issues
+            // (like 35 * .01 = 0.35000000000000003)
+            difference = Math.round(difference * precision) / precision;
+            return difference + settings.min;
+          },
+          
+          determinePosition: function(value) {
+            var ratio = (value - settings.min) / (settings.max - settings.min);
+            return Math.round(ratio * $(inner).width()) + $(trackLeft).position().left - offset;
+          },
+          
+          setValue: function(newValue, triggeredByUser) {
+            if(typeof triggeredByUser === 'undefined') {
+              triggeredByUser = true;
+            }
+            if(settings.input) {
+              $(settings.input).val(newValue);
+            }
+            if(settings.onChange) {
+              settings.onChange(newValue, {triggeredByUser: triggeredByUser});
+            }
+          },
+          
+          setPosition: function(value) {
+            $(thumb).css({left: String(value) + 'px'});
+            $(trackLeft).css({width: String(value + offset) + 'px'});
+          },
+          
+          rangeMousedown: function(mdEvent, isTouch, originalEvent) {
+            if( !$(element).hasClass('disabled') ) {
+              mdEvent.preventDefault();
+              var left = $(inner).offset().left;
+              var right = left + $(inner).width();
+              var pageX;
+              if(isTouch) {
+                pageX = originalEvent.originalEvent.touches[0].pageX;
+              } else {
+                pageX = (typeof mdEvent.pageX != 'undefined') ? mdEvent.pageX : originalEvent.pageX;
+              }
+              var value = module.determineValue(left, right, pageX);
+              if(pageX >= left && pageX <= right) {
+                module.setPosition(pageX - left - offset);
+                module.setValue(value);
+              }
+              var rangeMousemove = function(mmEvent) {
+                mmEvent.preventDefault();
+                if(isTouch) {
+                  pageX = mmEvent.originalEvent.touches[0].pageX;
+                } else {
+                  pageX = mmEvent.pageX;
+                }
+                value = module.determineValue(left, right, pageX);
+                if(pageX >= left && pageX <= right) {
+                  if(value >= settings.min && value <= settings.max) {
+                    module.setPosition(pageX - left - offset);
+                    module.setValue(value);
+                  }
+                }
+              }
+              var rangeMouseup = function(muEvent) {
+                if(isTouch) {
+                  $(document).off('touchmove', rangeMousemove);
+                  $(document).off('touchend', rangeMouseup);
+                } else {
+                  $(document).off('mousemove', rangeMousemove);
+                  $(document).off('mouseup', rangeMouseup);
+                }
+              }
+              if(isTouch) {
+                $(document).on('touchmove', rangeMousemove);
+                $(document).on('touchend', rangeMouseup);
+              }
+              else {
+                $(document).on('mousemove', rangeMousemove);
+                $(document).on('mouseup', rangeMouseup);
+              }
+            }
+          },
+          
+          setValuePosition: function(val, triggeredByUser) {
+            if(typeof triggeredByUser === 'undefined') {
+              triggeredByUser = true;
+            }
+            var position = module.determinePosition(val);
+            module.setPosition(position);
+            module.setValue(val, triggeredByUser);
+          },
+          
+          invoke: function(query) {
+            switch(query) {
+              case 'set value':
+                if(queryArguments.length > 0) {
+                  instance.setValuePosition(queryArguments[0], false);
+                }
+                break;
+            }
+          },
+          
+          addVisibilityListener: function(elem) {
+            
+            // Add a mutation observer (https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver)
+            // to detect when root invisible element is behing shown in order to initialize the thumb correctly
+            // when position and offets are available (https://stackoverflow.com/a/5974377)
+            
+            var observer = new MutationObserver(function(mutationList) {
+              if ($(elem).is(':visible')) {
+                observer.disconnect(); // Avoid infinite recursion because « module.setValuePosition » will trigger this observer
+                module.setValuePosition(settings.start);
+              }
+            });
+            
+            var closestHiddenParent = $(elem).parentsUntil(':visible');
+            
+            if (closestHiddenParent.length != 0) {
+              observer.observe(closestHiddenParent[closestHiddenParent.length - 1], {attributes: true});
+            }
+          },
+          
+        };
+        
+        if(methodInvoked) {
+          if(instance === undefined) {
+            module.initialize();
+          }
+          module.invoke(query);
+        }
+        else {
+          module.initialize();
+        }
+        
+      })
+    ;
+    
+    return this;
+    
+  };
+  
+  $.fn.range.settings = {
+    
+    name         : 'Range',
+    namespace    : 'range',
+    
+    min          : 0,
+    max          : false,
+    step         : 1,
+    start        : 0,
+    input        : false,
+    
+    onChange     : function(value){},
+    
+  };
+  
+  
+})( jQuery, window, document );
+
+/*!
+ * # Semantic UI 2.6.3 - Rating
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -12993,7 +14967,7 @@ $.fn.rating = function(parameters) {
             module.setup.layout();
           }
 
-          if(settings.interactive) {
+          if(settings.interactive && !module.is.disabled()) {
             module.enable();
           }
           else {
@@ -13130,6 +15104,9 @@ $.fn.rating = function(parameters) {
         is: {
           initialLoad: function() {
             return initialLoad;
+          },
+          disabled: function() {
+            return $module.hasClass(className.disabled);
           }
         },
 
@@ -13434,7 +15411,7 @@ $.fn.rating.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Search
+ * # Semantic UI 2.6.3 - Search
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -13660,6 +15637,9 @@ $.fn.search = function(parameters) {
                 result  = $result.data(metadata.result) || module.get.result(value, results),
                 returnedValue
               ;
+              if(value) {
+                module.set.value(value);
+              }
               if( $.isFunction(settings.onSelect) ) {
                 if(settings.onSelect.call(element, result, results) === false) {
                   module.debug('Custom onSelect callback cancelled default select action');
@@ -13668,9 +15648,6 @@ $.fn.search = function(parameters) {
                 }
               }
               module.hideResults();
-              if(value) {
-                module.set.value(value);
-              }
               if(href) {
                 module.verbose('Opening search link found in result', $link);
                 if(target == '_blank' || event.ctrlKey) {
@@ -13772,7 +15749,7 @@ $.fn.search = function(parameters) {
               apiSettings = {
                 debug             : settings.debug,
                 on                : false,
-                cache             : true,
+                cache             : settings.cache,
                 action            : 'search',
                 urlData           : {
                   query : searchTerm
@@ -14453,17 +16430,17 @@ $.fn.search = function(parameters) {
             }
           }
           else if(settings.showNoResults) {
-            html = module.displayMessage(error.noResults, 'empty');
+            html = module.displayMessage(error.noResults, 'empty', error.noResultsHeader);
           }
           settings.onResults.call(element, response);
           return html;
         },
 
-        displayMessage: function(text, type) {
+        displayMessage: function(text, type, header) {
           type = type || 'standard';
-          module.debug('Displaying message', text, type);
-          module.addResults( settings.templates.message(text, type) );
-          return settings.templates.message(text, type);
+          module.debug('Displaying message', text, type, header);
+          module.addResults( settings.templates.message(text, type, header) );
+          return settings.templates.message(text, type, header);
         },
 
         setting: function(name, value) {
@@ -14732,6 +16709,7 @@ $.fn.search.settings = {
 
   error : {
     source          : 'Cannot search. No source used, and Semantic API module was not included',
+    noResultsHeader : 'No Results',
     noResults       : 'Your search returned no results',
     logging         : 'Error in debug logging, exiting.',
     noEndpoint      : 'No search endpoint was specified',
@@ -14801,7 +16779,7 @@ $.fn.search.settings = {
       }
       return string;
     },
-    message: function(message, type) {
+    message: function(message, type, header) {
       var
         html = ''
       ;
@@ -14809,16 +16787,12 @@ $.fn.search.settings = {
         html +=  ''
           + '<div class="message ' + type + '">'
         ;
-        // message type
-        if(type == 'empty') {
+        if(header) {
           html += ''
-            + '<div class="header">No Results</div class="header">'
-            + '<div class="description">' + message + '</div class="description">'
+          + '<div class="header">' + header + '</div class="header">'
           ;
         }
-        else {
-          html += ' <div class="description">' + message + '</div>';
-        }
+        html += ' <div class="description">' + message + '</div>';
         html += '</div>';
       }
       return html;
@@ -14878,10 +16852,17 @@ $.fn.search.settings = {
           }
         });
         if(response[fields.action]) {
-          html += ''
-          + '<a href="' + response[fields.action][fields.actionURL] + '" class="action">'
-          +   response[fields.action][fields.actionText]
-          + '</a>';
+          if(fields.actionURL === false) {
+            html += ''
+            + '<div class="action">'
+            +   response[fields.action][fields.actionText]
+            + '</div>';
+          } else {
+            html += ''
+            + '<a href="' + response[fields.action][fields.actionURL] + '" class="action">'
+            +   response[fields.action][fields.actionText]
+            + '</a>';
+          }
         }
         return html;
       }
@@ -14923,12 +16904,18 @@ $.fn.search.settings = {
           ;
           html += '</a>';
         });
-
         if(response[fields.action]) {
-          html += ''
-          + '<a href="' + response[fields.action][fields.actionURL] + '" class="action">'
-          +   response[fields.action][fields.actionText]
-          + '</a>';
+          if(fields.actionURL === false) {
+            html += ''
+            + '<div class="action">'
+            +   response[fields.action][fields.actionText]
+            + '</div>';
+          } else {
+            html += ''
+            + '<a href="' + response[fields.action][fields.actionURL] + '" class="action">'
+            +   response[fields.action][fields.actionText]
+            + '</a>';
+          }
         }
         return html;
       }
@@ -14940,7 +16927,7 @@ $.fn.search.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Shape
+ * # Semantic UI 2.6.3 - Shape
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -15862,7 +17849,7 @@ $.fn.shape.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Sidebar
+ * # Semantic UI 2.6.3 - Sidebar
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -16896,7 +18883,7 @@ $.fn.sidebar.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Sticky
+ * # Semantic UI 2.6.3 - Sticky
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -17856,7 +19843,7 @@ $.fn.sticky.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Tab
+ * # Semantic UI 2.6.3 - Tab
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -18809,7 +20796,600 @@ $.fn.tab.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Transition
+ * # Semantic UI 2.6.3 - Toast
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ($, window, document, undefined) {
+
+'use strict';
+
+window = (typeof window != 'undefined' && window.Math == Math)
+  ? window
+  : (typeof self != 'undefined' && self.Math == Math)
+    ? self
+    : Function('return this')()
+;
+
+$.fn.toast = function(parameters) {
+  var
+    $allModules    = $(this),
+    moduleSelector = $allModules.selector || '',
+
+    time           = new Date().getTime(),
+    performance    = [],
+
+    query          = arguments[0],
+    methodInvoked  = (typeof query == 'string'),
+    queryArguments = [].slice.call(arguments, 1),
+    returnedValue
+  ;
+  $allModules
+    .each(function() {
+      var
+        settings          = ( $.isPlainObject(parameters) )
+          ? $.extend(true, {}, $.fn.toast.settings, parameters)
+          : $.extend({}, $.fn.toast.settings),
+
+        className       = settings.className,
+        selector        = settings.selector,
+        error           = settings.error,
+        namespace       = settings.namespace,
+
+        eventNamespace  = '.' + namespace,
+        moduleNamespace = namespace + '-module',
+
+        $module         = $(this),
+        $toastBox       = $('<div/>',{'class':settings.className.box}),
+        $toast          = $('<div/>'),
+        $progress       = $('<div/>',{'class':settings.className.progress+' '+settings.class}),
+        $progressBar    = $('<div/>',{'class':'bar'}),
+
+        $close          = $('<i/>',{'class':'close icon'}),
+        $context        = (settings.context)
+          ? $(settings.context)
+          : $('body'),
+
+        element         = this,
+        instance        = $module.data(moduleNamespace),
+
+        module
+      ;
+      module = {
+
+        initialize: function() {
+          module.verbose('Initializing element');
+          if(typeof settings.showProgress !== 'string' || ['top','bottom'].indexOf(settings.showProgress) === -1 ) {
+            settings.showProgress = false;
+          }
+          if (!module.has.container()) {
+            module.create.container();
+          }
+
+          module.create.toast();
+
+          module.bind.events();
+          
+          if(settings.displayTime > 0) {
+            module.closeTimer = setTimeout(module.close, settings.displayTime+(!!settings.showProgress ? 300 : 0));
+          }
+          module.show();
+        },
+
+        destroy: function() {
+          module.debug('Removing toast', $toast);
+          $toast.remove();
+          $toast = undefined;
+          settings.onRemove.call($toast, element);
+        },
+
+        show: function(callback) {
+          callback = callback || function(){};
+          module.debug('Showing toast');
+          if(settings.onShow.call($toast, element) === false) {
+            module.debug('onShow callback returned false, cancelling toast animation');
+            return;
+          }
+          module.animate.show(callback);
+        },
+
+        close: function(callback) {
+          if(module.closeTimer) {
+              clearTimeout(module.closeTimer);
+          }
+          callback = callback || function(){};
+          module.remove.visible();
+          module.unbind.events();
+          module.animate.close(callback);
+
+        },
+
+        create: {
+          container: function() {
+            module.verbose('Creating container');
+            $context.append('<div class="ui ' + settings.position + ' ' + className.container + '"></div>');
+          },
+          toast: function() {
+            var $content = $('<div/>').addClass(className.content);
+            module.verbose('Creating toast');
+            if(settings.closeIcon) {
+                $toast.append($close);
+                $toast.css('cursor','default');
+            }
+
+            var iconClass = typeof settings.showIcon === 'string' ? settings.showIcon : settings.showIcon && settings.icons[settings.class] ? settings.icons[settings.class] : '';
+            if (iconClass != '') {
+               var $icon = $('<i/>').addClass(iconClass + ' ' + className.icon);
+
+              $toast
+                .addClass(className.icon)
+                .append($icon)
+              ;
+            }
+
+            if (settings.title !== '') {
+              var 
+                $title = $('<div/>')
+                  .addClass(className.title)
+                  .text(settings.title)
+                ;
+
+              $content.append($title);
+            }
+
+            $content.append($('<div/>').html(settings.message));
+
+            $toast
+              .addClass(settings.class + ' ' + className.toast)
+              .append($content)
+            ;
+            $toast.css('opacity', settings.opacity);
+            if(settings.compact || $toast.hasClass('compact')) {
+                $toastBox.addClass('compact');
+            }
+            if($toast.hasClass('toast') && !$toast.hasClass('inverted')){
+              $progress.addClass('inverted');
+            } else {
+              $progress.removeClass('inverted');
+            }
+            $toast = $toastBox.append($toast);
+            if(!!settings.showProgress && settings.displayTime > 0){
+              $progress
+                .addClass(settings.showProgress)
+                .append($progressBar);
+              if ($progress.hasClass('top')) {
+                  $toast.prepend($progress);
+              } else {
+                  $toast.append($progress);
+              }
+              $progressBar.css('transition','width '+(settings.displayTime/1000)+'s linear');
+              $progressBar.width(settings.progressUp?'0%':'100%');
+              setTimeout(function() {
+                  if(typeof $progress !== 'undefined'){
+                    $progressBar.width(settings.progressUp?'100%':'0%');
+                }
+              },300);
+            }
+            if (settings.newestOnTop) {
+              $toast.prependTo(module.get.container());
+            }
+            else {
+              $toast.appendTo(module.get.container());
+            }
+          }
+        },
+
+        bind: {
+          events: function() {
+            module.debug('Binding events to toast');
+            (settings.closeIcon ? $close : $toast)
+              .on('click' + eventNamespace, module.event.click)
+            ;
+          }
+        },
+
+        unbind: {
+          events: function() {
+            module.debug('Unbinding events to toast');
+            (settings.closeIcon ? $close : $toast)
+              .off('click' + eventNamespace)
+            ;
+          }
+        },
+
+        animate: {
+          show: function(callback) {
+            callback = $.isFunction(callback) ? callback : function(){};
+            if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+              module.set.visible();
+              $toast
+                .transition({
+                  animation  : settings.transition.showMethod + ' in',
+                  queue      : false,
+                  debug      : settings.debug,
+                  verbose    : settings.verbose,
+                  duration   : settings.transition.showDuration,
+                  onComplete : function() {
+                    callback.call($toast, element);
+                    settings.onVisible.call($toast, element);
+                  }
+                })
+              ;
+            }
+            else {
+              module.error(error.noTransition);
+            }
+          },
+          close: function(callback) {
+            callback = $.isFunction(callback) ? callback : function(){};
+            module.debug('Closing toast');
+            if(settings.onHide.call($toast, element) === false) {
+              module.debug('onHide callback returned false, cancelling toast animation');
+              return;
+            }
+            if(settings.transition && $.fn.transition !== undefined && $module.transition('is supported')) {
+              $toast
+                .transition({
+                  animation  : settings.transition.hideMethod + ' out',
+                  queue      : false,
+                  duration   : settings.transition.hideDuration,
+                  debug      : settings.debug,
+                  verbose    : settings.verbose,
+
+                  onBeforeHide: function(callback){
+                      callback = $.isFunction(callback)?callback : function(){};
+                      if(settings.transition.closeEasing !== ''){
+                          $toast.css('opacity',0);
+                          $toast.wrap('<div/>').parent().slideUp(500,settings.transition.closeEasing,function(){
+                              $toast.parent().remove();
+                              callback.call($toast);
+                          });
+                      } else {
+                        callback.call($toast);
+                      }
+                  },
+                  onComplete : function() {
+                    module.destroy();
+                    callback.call($toast, element);
+                    settings.onHidden.call($toast, element);
+                  }
+                })
+              ;
+            }
+            else {
+              module.error(error.noTransition);
+            }
+          }
+        },
+
+        has: {
+          container: function() {
+            module.verbose('Determining if there is already a container');
+            return ($context.find(module.helpers.toClass(settings.position) + selector.container).length > 0);
+          }
+        },
+
+        get: {
+          container: function() {
+            return ($context.find(module.helpers.toClass(settings.position) + selector.container)[0]);
+          }
+        },
+
+        set: {
+          visible: function() {
+            $toast.addClass(className.visible);
+          }
+        },
+
+        remove: {
+          visible: function() {
+            $toast.removeClass(className.visible);
+          }
+        },
+
+        event: {
+          click: function() {
+            settings.onClick.call($toast, element);
+            module.close();
+          }
+        },
+
+        helpers: {
+          toClass: function(selector) {
+            var
+              classes = selector.split(' '),
+              result = ''
+            ;
+
+            classes.forEach(function (element) {
+              result += '.' + element;
+            });
+
+            return result;
+          }
+        },
+
+        setting: function(name, value) {
+          module.debug('Changing setting', name, value);
+          if( $.isPlainObject(name) ) {
+            $.extend(true, settings, name);
+          }
+          else if(value !== undefined) {
+            if($.isPlainObject(settings[name])) {
+              $.extend(true, settings[name], value);
+            }
+            else {
+              settings[name] = value;
+            }
+          }
+          else {
+            return settings[name];
+          }
+        },
+        internal: function(name, value) {
+          if( $.isPlainObject(name) ) {
+            $.extend(true, module, name);
+          }
+          else if(value !== undefined) {
+            module[name] = value;
+          }
+          else {
+            return module[name];
+          }
+        },
+        debug: function() {
+          if(!settings.silent && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.debug = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.debug.apply(console, arguments);
+            }
+          }
+        },
+        verbose: function() {
+          if(!settings.silent && settings.verbose && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.verbose = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.verbose.apply(console, arguments);
+            }
+          }
+        },
+        error: function() {
+          if(!settings.silent) {
+            module.error = Function.prototype.bind.call(console.error, console, settings.name + ':');
+            module.error.apply(console, arguments);
+          }
+        },
+        performance: {
+          log: function(message) {
+            var
+              currentTime,
+              executionTime,
+              previousTime
+            ;
+            if(settings.performance) {
+              currentTime   = new Date().getTime();
+              previousTime  = time || currentTime;
+              executionTime = currentTime - previousTime;
+              time          = currentTime;
+              performance.push({
+                'Name'           : message[0],
+                'Arguments'      : [].slice.call(message, 1) || '',
+                'Element'        : element,
+                'Execution Time' : executionTime
+              });
+            }
+            clearTimeout(module.performance.timer);
+            module.performance.timer = setTimeout(module.performance.display, 500);
+          },
+          display: function() {
+            var
+              title = settings.name + ':',
+              totalTime = 0
+            ;
+            time = false;
+            clearTimeout(module.performance.timer);
+            $.each(performance, function(index, data) {
+              totalTime += data['Execution Time'];
+            });
+            title += ' ' + totalTime + 'ms';
+            if(moduleSelector) {
+              title += ' \'' + moduleSelector + '\'';
+            }
+            if( (console.group !== undefined || console.table !== undefined) && performance.length > 0) {
+              console.groupCollapsed(title);
+              if(console.table) {
+                console.table(performance);
+              }
+              else {
+                $.each(performance, function(index, data) {
+                  console.log(data['Name'] + ': ' + data['Execution Time']+'ms');
+                });
+              }
+              console.groupEnd();
+            }
+            performance = [];
+          }
+        },
+        invoke: function(query, passedArguments, context) {
+          var
+            object = instance,
+            maxDepth,
+            found,
+            response
+          ;
+          passedArguments = passedArguments || queryArguments;
+          context         = element         || context;
+          if(typeof query == 'string' && object !== undefined) {
+            query    = query.split(/[\. ]/);
+            maxDepth = query.length - 1;
+            $.each(query, function(depth, value) {
+              var camelCaseValue = (depth != maxDepth)
+                ? value + query[depth + 1].charAt(0).toUpperCase() + query[depth + 1].slice(1)
+                : query
+              ;
+              if( $.isPlainObject( object[camelCaseValue] ) && (depth != maxDepth) ) {
+                object = object[camelCaseValue];
+              }
+              else if( object[camelCaseValue] !== undefined ) {
+                found = object[camelCaseValue];
+                return false;
+              }
+              else if( $.isPlainObject( object[value] ) && (depth != maxDepth) ) {
+                object = object[value];
+              }
+              else if( object[value] !== undefined ) {
+                found = object[value];
+                return false;
+              }
+              else {
+                module.error(error.method, query);
+                return false;
+              }
+            });
+          }
+          if ( $.isFunction( found ) ) {
+            response = found.apply(context, passedArguments);
+          }
+          else if(found !== undefined) {
+            response = found;
+          }
+          if($.isArray(returnedValue)) {
+            returnedValue.push(response);
+          }
+          else if(returnedValue !== undefined) {
+            returnedValue = [returnedValue, response];
+          }
+          else if(response !== undefined) {
+            returnedValue = response;
+          }
+          return found;
+        }
+      };
+
+      if(methodInvoked) {
+        if(instance === undefined) {
+          module.initialize();
+        }
+        module.invoke(query);
+      }
+      else {
+        if(instance !== undefined) {
+          instance.invoke('destroy');
+        }
+        module.initialize();
+      }
+    })
+  ;
+
+  return (returnedValue !== undefined)
+    ? returnedValue
+    : this
+  ;
+};
+
+$.fn.toast.settings = {
+
+  name           : 'Toast',
+  namespace      : 'toast',
+
+  silent         : false,
+  debug          : false,
+  verbose        : false,
+  performance    : true,
+
+  context        : 'body',
+
+  position       : 'top right',
+  class          : 'info',
+
+  title          : '',
+  message        : '',
+  displayTime    : 3000, // set to zero to require manually dismissal, otherwise hides on its own
+  showIcon       : true,
+  newestOnTop    : false,
+  showProgress   : false,
+  progressUp     : true, //if false, the bar will start at 100% and decrease to 0%
+  opacity        : 1,
+  compact        : true,
+  closeIcon      : false,
+
+  // transition settings
+  transition     : {
+    showMethod   : 'scale',
+    showDuration : 500,
+    hideMethod   : 'scale',
+    hideDuration : 500,
+    closeEasing  : 'easeOutBounce'  //Set to empty string to stack the closed toast area immediately (old behaviour)
+  },
+
+  error: {
+    method       : 'The method you called is not defined.',
+    noTransition : 'This module requires ui transitions <https://github.com/Semantic-Org/UI-Transition>'
+  },
+
+  className      : {
+    container    : 'toast-container',
+    box          : 'toast-box',
+    progress     : 'ui attached active progress',
+    toast        : 'ui toast',
+    icon         : 'icon',
+    visible      : 'visible',
+    content      : 'content',
+    title        : 'title'
+  },
+
+  icons          : {
+    info         : 'info',
+    success      : 'checkmark',
+    warning      : 'warning',
+    error        : 'times'
+  },
+
+  selector       : {
+    container    : '.toast-container',
+    box          : '.toast-box',
+    toast        : '.ui.toast'
+  },
+
+  // callbacks
+  onShow         : function(){},
+  onVisible      : function(){},
+  onClick        : function(){},
+  onHide         : function(){},
+  onHidden       : function(){},
+  onRemove       : function(){},
+};
+
+$.extend( $.easing, {
+    easeOutBounce: function (x, t, b, c, d) {
+        if ((t/=d) < (1/2.75)) {
+            return c*(7.5625*t*t) + b;
+        } else if (t < (2/2.75)) {
+            return c*(7.5625*(t-=(1.5/2.75))*t + .75) + b;
+        } else if (t < (2.5/2.75)) {
+            return c*(7.5625*(t-=(2.25/2.75))*t + .9375) + b;
+        } else {
+            return c*(7.5625*(t-=(2.625/2.75))*t + .984375) + b;
+        }
+    }
+});
+
+
+})( jQuery, window, document );
+
+/*!
+ * # Semantic UI 2.6.3 - Transition
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -19589,11 +22169,22 @@ $.fn.transition = function() {
           element.blur(); // IE will trigger focus change if element is not blurred before hiding
           module.remove.display();
           module.remove.visible();
-          module.set.hidden();
-          module.force.hidden();
-          settings.onHide.call(element);
-          settings.onComplete.call(element);
-          // module.repaint();
+          if($.isFunction(settings.onBeforeHide)){
+            settings.onBeforeHide.call(element,function(){
+                module.hideNow();
+            });
+          } else {
+              module.hideNow();
+          }
+
+        },
+
+        hideNow: function() {
+            module.set.hidden();
+            module.force.hidden();
+            settings.onHide.call(element);
+            settings.onComplete.call(element);
+            // module.repaint();
         },
 
         show: function(display) {
@@ -19905,7 +22496,7 @@ $.fn.transition.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - API
+ * # Semantic UI 2.6.3 - API
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -21073,7 +23664,716 @@ $.api.settings = {
 })( jQuery, window, document );
 
 /*!
- * # Semantic UI 2.3.2 - Visibility
+ * # Semantic UI 2.6.3 - State
+ * http://github.com/semantic-org/semantic-ui/
+ *
+ *
+ * Released under the MIT license
+ * http://opensource.org/licenses/MIT
+ *
+ */
+
+;(function ($, window, document, undefined) {
+
+"use strict";
+
+window = (typeof window != 'undefined' && window.Math == Math)
+  ? window
+  : (typeof self != 'undefined' && self.Math == Math)
+    ? self
+    : Function('return this')()
+;
+
+$.fn.state = function(parameters) {
+  var
+    $allModules     = $(this),
+
+    moduleSelector  = $allModules.selector || '',
+
+    hasTouch        = ('ontouchstart' in document.documentElement),
+    time            = new Date().getTime(),
+    performance     = [],
+
+    query           = arguments[0],
+    methodInvoked   = (typeof query == 'string'),
+    queryArguments  = [].slice.call(arguments, 1),
+
+    returnedValue
+  ;
+  $allModules
+    .each(function() {
+      var
+        settings          = ( $.isPlainObject(parameters) )
+          ? $.extend(true, {}, $.fn.state.settings, parameters)
+          : $.extend({}, $.fn.state.settings),
+
+        error           = settings.error,
+        metadata        = settings.metadata,
+        className       = settings.className,
+        namespace       = settings.namespace,
+        states          = settings.states,
+        text            = settings.text,
+
+        eventNamespace  = '.' + namespace,
+        moduleNamespace = namespace + '-module',
+
+        $module         = $(this),
+
+        element         = this,
+        instance        = $module.data(moduleNamespace),
+
+        module
+      ;
+      module = {
+
+        initialize: function() {
+          module.verbose('Initializing module');
+
+          // allow module to guess desired state based on element
+          if(settings.automatic) {
+            module.add.defaults();
+          }
+
+          // bind events with delegated events
+          if(settings.context && moduleSelector !== '') {
+            $(settings.context)
+              .on(moduleSelector, 'mouseenter' + eventNamespace, module.change.text)
+              .on(moduleSelector, 'mouseleave' + eventNamespace, module.reset.text)
+              .on(moduleSelector, 'click'      + eventNamespace, module.toggle.state)
+            ;
+          }
+          else {
+            $module
+              .on('mouseenter' + eventNamespace, module.change.text)
+              .on('mouseleave' + eventNamespace, module.reset.text)
+              .on('click'      + eventNamespace, module.toggle.state)
+            ;
+          }
+          module.instantiate();
+        },
+
+        instantiate: function() {
+          module.verbose('Storing instance of module', module);
+          instance = module;
+          $module
+            .data(moduleNamespace, module)
+          ;
+        },
+
+        destroy: function() {
+          module.verbose('Destroying previous module', instance);
+          $module
+            .off(eventNamespace)
+            .removeData(moduleNamespace)
+          ;
+        },
+
+        refresh: function() {
+          module.verbose('Refreshing selector cache');
+          $module = $(element);
+        },
+
+        add: {
+          defaults: function() {
+            var
+              userStates = parameters && $.isPlainObject(parameters.states)
+                ? parameters.states
+                : {}
+            ;
+            $.each(settings.defaults, function(type, typeStates) {
+              if( module.is[type] !== undefined && module.is[type]() ) {
+                module.verbose('Adding default states', type, element);
+                $.extend(settings.states, typeStates, userStates);
+              }
+            });
+          }
+        },
+
+        is: {
+
+          active: function() {
+            return $module.hasClass(className.active);
+          },
+          loading: function() {
+            return $module.hasClass(className.loading);
+          },
+          inactive: function() {
+            return !( $module.hasClass(className.active) );
+          },
+          state: function(state) {
+            if(className[state] === undefined) {
+              return false;
+            }
+            return $module.hasClass( className[state] );
+          },
+
+          enabled: function() {
+            return !( $module.is(settings.filter.active) );
+          },
+          disabled: function() {
+            return ( $module.is(settings.filter.active) );
+          },
+          textEnabled: function() {
+            return !( $module.is(settings.filter.text) );
+          },
+
+          // definitions for automatic type detection
+          button: function() {
+            return $module.is('.button:not(a, .submit)');
+          },
+          input: function() {
+            return $module.is('input');
+          },
+          progress: function() {
+            return $module.is('.ui.progress');
+          }
+        },
+
+        allow: function(state) {
+          module.debug('Now allowing state', state);
+          states[state] = true;
+        },
+        disallow: function(state) {
+          module.debug('No longer allowing', state);
+          states[state] = false;
+        },
+
+        allows: function(state) {
+          return states[state] || false;
+        },
+
+        enable: function() {
+          $module.removeClass(className.disabled);
+        },
+
+        disable: function() {
+          $module.addClass(className.disabled);
+        },
+
+        setState: function(state) {
+          if(module.allows(state)) {
+            $module.addClass( className[state] );
+          }
+        },
+
+        removeState: function(state) {
+          if(module.allows(state)) {
+            $module.removeClass( className[state] );
+          }
+        },
+
+        toggle: {
+          state: function() {
+            var
+              apiRequest,
+              requestCancelled
+            ;
+            if( module.allows('active') && module.is.enabled() ) {
+              module.refresh();
+              if($.fn.api !== undefined) {
+                apiRequest       = $module.api('get request');
+                requestCancelled = $module.api('was cancelled');
+                if( requestCancelled ) {
+                  module.debug('API Request cancelled by beforesend');
+                  settings.activateTest   = function(){ return false; };
+                  settings.deactivateTest = function(){ return false; };
+                }
+                else if(apiRequest) {
+                  module.listenTo(apiRequest);
+                  return;
+                }
+              }
+              module.change.state();
+            }
+          }
+        },
+
+        listenTo: function(apiRequest) {
+          module.debug('API request detected, waiting for state signal', apiRequest);
+          if(apiRequest) {
+            if(text.loading) {
+              module.update.text(text.loading);
+            }
+            $.when(apiRequest)
+              .then(function() {
+                if(apiRequest.state() == 'resolved') {
+                  module.debug('API request succeeded');
+                  settings.activateTest   = function(){ return true; };
+                  settings.deactivateTest = function(){ return true; };
+                }
+                else {
+                  module.debug('API request failed');
+                  settings.activateTest   = function(){ return false; };
+                  settings.deactivateTest = function(){ return false; };
+                }
+                module.change.state();
+              })
+            ;
+          }
+        },
+
+        // checks whether active/inactive state can be given
+        change: {
+
+          state: function() {
+            module.debug('Determining state change direction');
+            // inactive to active change
+            if( module.is.inactive() ) {
+              module.activate();
+            }
+            else {
+              module.deactivate();
+            }
+            if(settings.sync) {
+              module.sync();
+            }
+            settings.onChange.call(element);
+          },
+
+          text: function() {
+            if( module.is.textEnabled() ) {
+              if(module.is.disabled() ) {
+                module.verbose('Changing text to disabled text', text.hover);
+                module.update.text(text.disabled);
+              }
+              else if( module.is.active() ) {
+                if(text.hover) {
+                  module.verbose('Changing text to hover text', text.hover);
+                  module.update.text(text.hover);
+                }
+                else if(text.deactivate) {
+                  module.verbose('Changing text to deactivating text', text.deactivate);
+                  module.update.text(text.deactivate);
+                }
+              }
+              else {
+                if(text.hover) {
+                  module.verbose('Changing text to hover text', text.hover);
+                  module.update.text(text.hover);
+                }
+                else if(text.activate){
+                  module.verbose('Changing text to activating text', text.activate);
+                  module.update.text(text.activate);
+                }
+              }
+            }
+          }
+
+        },
+
+        activate: function() {
+          if( settings.activateTest.call(element) ) {
+            module.debug('Setting state to active');
+            $module
+              .addClass(className.active)
+            ;
+            module.update.text(text.active);
+            settings.onActivate.call(element);
+          }
+        },
+
+        deactivate: function() {
+          if( settings.deactivateTest.call(element) ) {
+            module.debug('Setting state to inactive');
+            $module
+              .removeClass(className.active)
+            ;
+            module.update.text(text.inactive);
+            settings.onDeactivate.call(element);
+          }
+        },
+
+        sync: function() {
+          module.verbose('Syncing other buttons to current state');
+          if( module.is.active() ) {
+            $allModules
+              .not($module)
+                .state('activate');
+          }
+          else {
+            $allModules
+              .not($module)
+                .state('deactivate')
+            ;
+          }
+        },
+
+        get: {
+          text: function() {
+            return (settings.selector.text)
+              ? $module.find(settings.selector.text).text()
+              : $module.html()
+            ;
+          },
+          textFor: function(state) {
+            return text[state] || false;
+          }
+        },
+
+        flash: {
+          text: function(text, duration, callback) {
+            var
+              previousText = module.get.text()
+            ;
+            module.debug('Flashing text message', text, duration);
+            text     = text     || settings.text.flash;
+            duration = duration || settings.flashDuration;
+            callback = callback || function() {};
+            module.update.text(text);
+            setTimeout(function(){
+              module.update.text(previousText);
+              callback.call(element);
+            }, duration);
+          }
+        },
+
+        reset: {
+          // on mouseout sets text to previous value
+          text: function() {
+            var
+              activeText   = text.active   || $module.data(metadata.storedText),
+              inactiveText = text.inactive || $module.data(metadata.storedText)
+            ;
+            if( module.is.textEnabled() ) {
+              if( module.is.active() && activeText) {
+                module.verbose('Resetting active text', activeText);
+                module.update.text(activeText);
+              }
+              else if(inactiveText) {
+                module.verbose('Resetting inactive text', activeText);
+                module.update.text(inactiveText);
+              }
+            }
+          }
+        },
+
+        update: {
+          text: function(text) {
+            var
+              currentText = module.get.text()
+            ;
+            if(text && text !== currentText) {
+              module.debug('Updating text', text);
+              if(settings.selector.text) {
+                $module
+                  .data(metadata.storedText, text)
+                  .find(settings.selector.text)
+                    .text(text)
+                ;
+              }
+              else {
+                $module
+                  .data(metadata.storedText, text)
+                  .html(text)
+                ;
+              }
+            }
+            else {
+              module.debug('Text is already set, ignoring update', text);
+            }
+          }
+        },
+
+        setting: function(name, value) {
+          module.debug('Changing setting', name, value);
+          if( $.isPlainObject(name) ) {
+            $.extend(true, settings, name);
+          }
+          else if(value !== undefined) {
+            if($.isPlainObject(settings[name])) {
+              $.extend(true, settings[name], value);
+            }
+            else {
+              settings[name] = value;
+            }
+          }
+          else {
+            return settings[name];
+          }
+        },
+        internal: function(name, value) {
+          if( $.isPlainObject(name) ) {
+            $.extend(true, module, name);
+          }
+          else if(value !== undefined) {
+            module[name] = value;
+          }
+          else {
+            return module[name];
+          }
+        },
+        debug: function() {
+          if(!settings.silent && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.debug = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.debug.apply(console, arguments);
+            }
+          }
+        },
+        verbose: function() {
+          if(!settings.silent && settings.verbose && settings.debug) {
+            if(settings.performance) {
+              module.performance.log(arguments);
+            }
+            else {
+              module.verbose = Function.prototype.bind.call(console.info, console, settings.name + ':');
+              module.verbose.apply(console, arguments);
+            }
+          }
+        },
+        error: function() {
+          if(!settings.silent) {
+            module.error = Function.prototype.bind.call(console.error, console, settings.name + ':');
+            module.error.apply(console, arguments);
+          }
+        },
+        performance: {
+          log: function(message) {
+            var
+              currentTime,
+              executionTime,
+              previousTime
+            ;
+            if(settings.performance) {
+              currentTime   = new Date().getTime();
+              previousTime  = time || currentTime;
+              executionTime = currentTime - previousTime;
+              time          = currentTime;
+              performance.push({
+                'Name'           : message[0],
+                'Arguments'      : [].slice.call(message, 1) || '',
+                'Element'        : element,
+                'Execution Time' : executionTime
+              });
+            }
+            clearTimeout(module.performance.timer);
+            module.performance.timer = setTimeout(module.performance.display, 500);
+          },
+          display: function() {
+            var
+              title = settings.name + ':',
+              totalTime = 0
+            ;
+            time = false;
+            clearTimeout(module.performance.timer);
+            $.each(performance, function(index, data) {
+              totalTime += data['Execution Time'];
+            });
+            title += ' ' + totalTime + 'ms';
+            if(moduleSelector) {
+              title += ' \'' + moduleSelector + '\'';
+            }
+            if( (console.group !== undefined || console.table !== undefined) && performance.length > 0) {
+              console.groupCollapsed(title);
+              if(console.table) {
+                console.table(performance);
+              }
+              else {
+                $.each(performance, function(index, data) {
+                  console.log(data['Name'] + ': ' + data['Execution Time']+'ms');
+                });
+              }
+              console.groupEnd();
+            }
+            performance = [];
+          }
+        },
+        invoke: function(query, passedArguments, context) {
+          var
+            object = instance,
+            maxDepth,
+            found,
+            response
+          ;
+          passedArguments = passedArguments || queryArguments;
+          context         = element         || context;
+          if(typeof query == 'string' && object !== undefined) {
+            query    = query.split(/[\. ]/);
+            maxDepth = query.length - 1;
+            $.each(query, function(depth, value) {
+              var camelCaseValue = (depth != maxDepth)
+                ? value + query[depth + 1].charAt(0).toUpperCase() + query[depth + 1].slice(1)
+                : query
+              ;
+              if( $.isPlainObject( object[camelCaseValue] ) && (depth != maxDepth) ) {
+                object = object[camelCaseValue];
+              }
+              else if( object[camelCaseValue] !== undefined ) {
+                found = object[camelCaseValue];
+                return false;
+              }
+              else if( $.isPlainObject( object[value] ) && (depth != maxDepth) ) {
+                object = object[value];
+              }
+              else if( object[value] !== undefined ) {
+                found = object[value];
+                return false;
+              }
+              else {
+                module.error(error.method, query);
+                return false;
+              }
+            });
+          }
+          if ( $.isFunction( found ) ) {
+            response = found.apply(context, passedArguments);
+          }
+          else if(found !== undefined) {
+            response = found;
+          }
+          if($.isArray(returnedValue)) {
+            returnedValue.push(response);
+          }
+          else if(returnedValue !== undefined) {
+            returnedValue = [returnedValue, response];
+          }
+          else if(response !== undefined) {
+            returnedValue = response;
+          }
+          return found;
+        }
+      };
+
+      if(methodInvoked) {
+        if(instance === undefined) {
+          module.initialize();
+        }
+        module.invoke(query);
+      }
+      else {
+        if(instance !== undefined) {
+          instance.invoke('destroy');
+        }
+        module.initialize();
+      }
+    })
+  ;
+
+  return (returnedValue !== undefined)
+    ? returnedValue
+    : this
+  ;
+};
+
+$.fn.state.settings = {
+
+  // module info
+  name           : 'State',
+
+  // debug output
+  debug          : false,
+
+  // verbose debug output
+  verbose        : false,
+
+  // namespace for events
+  namespace      : 'state',
+
+  // debug data includes performance
+  performance    : true,
+
+  // callback occurs on state change
+  onActivate     : function() {},
+  onDeactivate   : function() {},
+  onChange       : function() {},
+
+  // state test functions
+  activateTest   : function() { return true; },
+  deactivateTest : function() { return true; },
+
+  // whether to automatically map default states
+  automatic      : true,
+
+  // activate / deactivate changes all elements instantiated at same time
+  sync           : false,
+
+  // default flash text duration, used for temporarily changing text of an element
+  flashDuration  : 1000,
+
+  // selector filter
+  filter     : {
+    text   : '.loading, .disabled',
+    active : '.disabled'
+  },
+
+  context    : false,
+
+  // error
+  error: {
+    beforeSend : 'The before send function has cancelled state change',
+    method     : 'The method you called is not defined.'
+  },
+
+  // metadata
+  metadata: {
+    promise    : 'promise',
+    storedText : 'stored-text'
+  },
+
+  // change class on state
+  className: {
+    active   : 'active',
+    disabled : 'disabled',
+    error    : 'error',
+    loading  : 'loading',
+    success  : 'success',
+    warning  : 'warning'
+  },
+
+  selector: {
+    // selector for text node
+    text: false
+  },
+
+  defaults : {
+    input: {
+      disabled : true,
+      loading  : true,
+      active   : true
+    },
+    button: {
+      disabled : true,
+      loading  : true,
+      active   : true,
+    },
+    progress: {
+      active   : true,
+      success  : true,
+      warning  : true,
+      error    : true
+    }
+  },
+
+  states     : {
+    active   : true,
+    disabled : true,
+    error    : true,
+    loading  : true,
+    success  : true,
+    warning  : true
+  },
+
+  text     : {
+    disabled   : false,
+    flash      : false,
+    hover      : false,
+    active     : false,
+    inactive   : false,
+    activate   : false,
+    deactivate : false
+  }
+
+};
+
+
+
+})( jQuery, window, document );
+
+/*!
+ * # Semantic UI 2.6.3 - Visibility
  * http://github.com/semantic-org/semantic-ui/
  *
  *

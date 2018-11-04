@@ -19,7 +19,7 @@ class HomeController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth');
+
     }
 
     /**
@@ -30,7 +30,17 @@ class HomeController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         $title = "Home";
+        if (!$user) {
+            $announcements = Announcement::all();
+            $collection = collect($announcements);
+            $reversed = $collection->reverse();
+            $reversed->all();
+            return view('home', ['title' => $title, 'role' => 'Subscriber',
+            'announcements' => $reversed, 'context' => "subscriber-home"]);
+        }
+
 
         if($user->hasRole('subscriber')) {
             $reg = RegisteredIds::where('idnum', $user->idnum)->first();

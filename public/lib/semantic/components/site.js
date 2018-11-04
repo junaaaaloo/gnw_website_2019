@@ -1,5 +1,5 @@
 /*!
- * # Semantic UI 2.3.2 - Site
+ * # Semantic UI 2.6.3 - Site
  * http://github.com/semantic-org/semantic-ui/
  *
  *
@@ -439,6 +439,7 @@ $.site.settings = {
   modules: [
     'accordion',
     'api',
+    'calendar',
     'checkbox',
     'dimmer',
     'dropdown',
@@ -447,15 +448,17 @@ $.site.settings = {
     'modal',
     'nag',
     'popup',
+    'range',
     'rating',
     'shape',
     'sidebar',
     'state',
     'sticky',
     'tab',
+    'toast',
     'transition',
-    'visit',
-    'visibility'
+    'visibility',
+    'visit'
   ],
 
   siteNamespace   : 'site',
