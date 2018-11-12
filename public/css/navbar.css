@@ -113,6 +113,29 @@
     }
 
     #navbar.open {
-        height: 273px;
+        height: 100%;
+        overflow-y: scroll;
     }
+
+    #navbar .desktop {
+        display: none;
+    }
+    
+    #navbar .mobile {
+        display: block;
+    }   
+}
+
+@media only screen and (min-width: 767px) { 
+    #navbar .desktop {
+        display: block;
+    }
+    
+    #navbar .mobile {
+        display: none;
+    }  
+}
+
+#logout-form {
+    display: none;
 }

@@ -1,134 +1,139 @@
-@extends('layouts.dashboard')
+@extends('admin.template', ["context"=>"admin.manage.announcements"])
 
-@section('stylesheets')
-<link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
-<link href="{{ asset('css/font-awesome-4.7.0/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="{{ asset('css/fontastic.css') }}">
-<link rel="stylesheet" href="{{ asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') }}">
-<link href="{{ asset('css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="{{ asset('css/style.green.css') }}" id="theme-stylesheet">
-<link href="{{ asset('css/dashboard.css') }}" rel="stylesheet" type="text/css">
-<link href="{{ asset('css/admindb.css') }}" rel="stylesheet" type="text/css">
+@section('substyles')
+<style>
+    div#managenews {
+        min-height: calc(100vh - 321px);
+    }
+</style>
 @endsection
 
-@section('navbar')
-<li>
-	<a href="{{ route('home') }}"><i class="fa fa-home"></i><span>Home</span></a>
-</li>
-<li> 
-    <a href="#sub-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-users"></i><span>Subscriber</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="sub-list" class="collapse list-unstyled">
-        <li> <a href="{{ route('admin.manage.regid') }}">Manage Registered IDs</a></li>
-        <li> <a href="{{ route('admin.manage.subs') }}">Manage Subscribers</a></li>
-        <li> <a href="{{ route('admin.manage.payments') }}">Manage Payment</a></li>
-        <li> <a href="{{ route('admin.manage.pictorial') }}">Manage Pictorial</a></li>
-    </ul>
-</li>
-<li> 
-    <a href="#announcement-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-paper-plane-o"></i><span>News</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="announcement-list" class="collapse list-unstyled">
-        <li> <a href="{{ route('admin.create') }}">Add News</a></li>
-        <li class="active"> <a href="{{ route('admin.manage.news') }}">Manage News</a></li>
-    </ul>
-</li>
-@if ($role === "Administrator")
-<li> 
-    <a href="#admin-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-group"></i><span>Admin</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="admin-list" class="collapse list-unstyled">
-        <li> <a href="{{ route('admin.manage.admin') }}">Manage Admin Accounts</a></li>
-    </ul>
-</li>
-@endif
+
+@section('substyles')
+<style>
+
+</style>
 @endsection
 
 @section('content')
-<section class="dashboard-header section-padding">
-    <div class="container-fluid">
-        <h1>Manage News/Announcements</h1>
-        <br>
-        <table id="newsTable" class="table table-bordered" cellspacing="0" width="100%">
-            <thead class="table-dark">
-                <tr>
-                    <th>Subject</th>
-                    <th>Created/Updated By</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($announcements as $announcement)
-                <tr class="news-row" data-subject="{{ $announcement->subject }}" data-id="{{ $announcement->id }}" data-message="{{ $announcement->message }}" data-user="{{ Auth::user()->name }}">
-                    <td>{{ $announcement->subject }}</td>
-                    <th>{{ $announcement->created_by }}</th>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</section>
+<div id="managenews" class="ui container brand page">
+    <h2>Manage Announcements</h2>
+    <button class = "ui green addnews_button button">
+        Create Announcement
+    </button>
+    <table class="announcments ui selectable three column table celled padded">
+        <thead class="table-dark">
+            <tr>
+                <th> Subject</th>
+                <th> Created/Updated By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($announcements as $announcement)
+            <tr onclick="accessAnnouncement({{$announcement}})">
+                <td>{{ $announcement->subject }}</td>
+                <td>{{ $announcement->created_by }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="manageNewsModal">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Manage</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+    <div id = "addnews_modal" class="ui modal">
+        <i class="icon close"></i>
+        <div class = "icon header">                       
+            CREATE ANNOUNCEMENT
+        </div>
+        <div class="content"> 
+            <form class = "ui form" method="POST" action="{{ route('news.store') }}">
+                {{ csrf_field() }}
+                
+                <div class="field">
+                    <label for="message">Subject/Title</label>
+                    <input type="text" id="message" name = "subject">
+                </div>
+                <div class="field">
+                    <label for="message">Created By</label>
+                    <input type="text" name = "created_by" id="addnews_createdby" readonly>
+                </div>
+                <div class="field">
+                    <label for="message">Message</label>
+                    <textarea type="text" rows="11" wrap="hard" name="message"></textarea>
+                </div>
+                <button type="submit" class="ui green button"> 
+                    <i class="icon paper plane"></i>
+                    POST
                 </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label for="managesubject">Subject/Title</label>
-                                <input type="text" class="form-control" id="managesubject" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="managemessage">Message</label>
-                                <textarea type="text" class="form-control" id="managemessage" rows="11" wrap="hard" disabled></textarea>
-                    </div>
-                </form>
-            </div>
-
-            <form id="editNewsMethod" method="POST" action="{{ route('news.edit') }}">
-                {{ csrf_field() }}
-                <input type="hidden" id="editsubject" name="editsubject">
-                <input type="hidden" id="editmessage" name="editmessage">
-                <input type="hidden" id="editby" name="editby">
-                <input type="hidden" id="editid" name="editid">
-                {{ csrf_field() }}
+                @if ($errors->any())
+                <div class="ui red message">
+                    @foreach ($errors->all() as $error)
+                        {{ $error }}<br>
+                    @endforeach
+                </div>
+                @endif
             </form>
-
-            <form id="deleteNewsMethod" method="POST" action="{{ route('news.delete') }}">
+        </div>
+    </div>
+    <div id="viewnews_modal" class="ui modal">
+        <i class="icon close"></i>
+        <div class="content">
+            <form class = "ui centered form" method="POST" action="{{ route('news.edit') }}">
                 {{ csrf_field() }}
+                
+                <div class="field">
+                    <label for="message">Subject</label>
+                    <input type="text" id="editsubject" name="editsubject">
+                </div>
+                <div class="field">
+                    <label for="message">Created By</label>
+                    <input type="text" id="editby" name="editby" readonly>
+                </div>
+                <div class="field">
+                    <label for="message">Message</label>
+                    <textarea type="text" id = "editmessage" name="editmessage" rows="11" wrap="hard"></textarea>
+                </div>
+                <input type="hidden" id="editid" name="editid">
+                <button id= "update" class="ui green button"> 
+                    <i class="icon paper plane"></i>
+                    UPDATE
+                </button>
+            </form>
+            
+              
+            <form id="deletenews" method="POST" action="{{ route('news.delete') }}">
                 <input type="hidden" id="deleteid" name="deleteid">
                 {{ csrf_field() }}
+                
+                <button id ="delete" class="ui red button"> 
+                    <i class="icon times"></i>
+                    DELETE
+                </button>
             </form>
-
-            <div class="modal-footer">
-                <div id="manageBtns">
-                    <button type="button" class="btn btn-primary" id="manageedit">Edit</button>
-                    <button type="button" class="btn btn-danger" id="managedelete">Delete</button>
-                </div>
-                <div id="submitedit">
-                    <button type="button" class="btn btn-primary" id="editNewsBtn">Edit</button>
-                </div>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
         </div>
+        
     </div>
 </div>
 @endsection
 
-@section('javascripts')
-<script src="{{ asset('js/jquery.min.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"> </script>
-<script src="{{ asset('js/bootstrap.min.js') }}"></script>
-<script src="{{ asset('js/grasp_mobile_progress_circle-1.0.0.min.js') }}"></script>
-<script src="{{ asset('vendor/jquery-validation/jquery.validate.min.js') }}"></script>
-<script src="{{ asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') }}"></script>
-<script src="{{ asset('js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('js/dataTables.bootstrap4.min.js') }}"></script>
-<script src="{{ asset('js/front.js') }}"></script>
-<script src="{{ asset('js/admindb.js') }}"></script>
+@section('subscripts')
+<script>
+let user = "{{Auth::user()->name}}"
+$(".addnews_button").click(() => {
+    $("#addnews_createdby").val(user)
+    $("#addnews_modal").modal('show')
+})
+
+function accessAnnouncement (announcement) {
+    $("#view_subject").val(announcement.subject)
+    $("#view_message").val(announcement.message)
+    $("#view_createdby").val(announcement.created_by)
+    $("#viewnews_modal").modal('show')
+
+    $("#editsubject").val(announcement.subject)
+    $("#editmessage").val(announcement.message)
+    $("#editid").val(announcement.id)
+    $("#editby").val(user)
+
+    $("#deleteid").val(announcement.id)
+}
+</script>
 @endsection

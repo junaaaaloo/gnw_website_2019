@@ -34,15 +34,16 @@ $("#login_modal").modal({
 	}
 })
 
-$(".login-button").click(() => {
-	$('#login_modal').modal('show');
+$(".login_button").click(() => {
+	$('#login_modal').modal('show')
 })
 
-function change () {
-	let query = new URLSearchParams(location.search)
-	if (query.get("login_show") == 1) {
-		$('#login_modal').modal('show');
-	}
-}
+$('.logout_button').click(() => {
+    $('#logout_modal').modal({
+        onApprove () {
+            $("#logout-form").submit();
+        }
+    })
 
-change();
+    $("#logout_modal").modal('show')
+})

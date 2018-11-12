@@ -86,7 +86,6 @@ a.brand.link.inverted {
     background: transparent;
     position: absolute;
     width: 100%;
-    height: auto;
     left: 0;
     top: 0;
 }
@@ -135,6 +134,10 @@ a.brand.link.inverted {
     height: 100vh;
 }
 
+.brand.page {
+    margin: 40px 0px;
+}
+
 .brand.slide:first-child {
     height: calc(100vh - 50px);
 }
@@ -149,4 +152,22 @@ a.brand.link.inverted {
     z-index: 2;
 }
 
+@media only screen and (max-width: 767px) {
+    .desktop {
+        display: none !important;
+    }
+    
+    .mobile {
+        display: block !important;
+    }   
+}
 
+@media only screen and (min-width: 767px) { 
+    .desktop {
+        display: block !important;
+    }
+    
+    .mobile {
+        display: none !important;
+    }  
+}

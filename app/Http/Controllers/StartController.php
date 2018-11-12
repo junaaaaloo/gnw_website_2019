@@ -11,14 +11,14 @@ class StartController extends Controller {
 	    	return redirect()->route('home');
 	    }
 
-	    return view('index.welcome', ['context' => "home"]);
+	    return view('index.welcome');
 	}
 	
 	public function about() {
-		return view('index.about', ['context' => "about"]);
+		return view('index.about');
 	}
 
 	public function contact() {
-		return view('index.contact', ['context' => "contact"]);
+		return view('index.contact');
 	}
 }

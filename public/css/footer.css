@@ -4,6 +4,7 @@
     background: var(--raisin-black);
     margin: 0 auto;
     padding: 20px;
+    min-height: 200px;
     text-align: center;
 }
 

@@ -10,16 +10,14 @@ use App\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class HomeController extends Controller
-{
+class HomeController extends Controller {
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
-    {
-
+    public function __construct() {
+        
     }
 
     /**
@@ -27,21 +25,10 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
+    public function index() {
         $user = Auth::user();
 
         $title = "Home";
-        if (!$user) {
-            $announcements = Announcement::all();
-            $collection = collect($announcements);
-            $reversed = $collection->reverse();
-            $reversed->all();
-            return view('home', ['title' => $title, 'role' => 'Subscriber',
-            'announcements' => $reversed, 'context' => "subscriber-home"]);
-        }
-
-
         if($user->hasRole('subscriber')) {
             $reg = RegisteredIds::where('idnum', $user->idnum)->first();
             if($reg->status == 0) {
@@ -52,7 +39,7 @@ class HomeController extends Controller
                 $reversed = $collection->reverse();
                 $reversed->all();
 
-                return view('home', ['title' => $title, 'role' => 'Subscriber',
+                return view('subscriber/home', ['title' => $title, 'role' => 'Subscriber',
                     'announcements' => $reversed]);
             }
         } else if ($user->hasRole('administrator') || $user->hasRole('editor')) {

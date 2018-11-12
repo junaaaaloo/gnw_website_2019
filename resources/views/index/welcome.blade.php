@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ["context" => "welcome"])
 
 @section('libraries')
     <script src="{{ asset('lib/particles.min.js') }}"> </script>
@@ -95,7 +95,7 @@
                   The official yearbook publication of De La Salle University.
               </h3>
               <div class = "ui basic segment">
-                  <button class = "ui login-button brand action white button">
+                  <button class = "ui login_button brand action white button">
                       LOGIN
                   </button>
                   <a href="{{ route('register') }}" class = "ui brand action green button">

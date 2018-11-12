@@ -49,58 +49,103 @@
             </a>
             <a href="/">
                 <img class = "header brand image" src="{{ asset('img/vertical-logo.png')}}">
-            </a>    
+            </a>
         </div>
+        @yield('menu.left')
         <div class="right menu">
-            <a href="{{ route ('about') }}" class="{{ $context == 'about' ? 'active' : '' }} nav item">
+            <div class = "mobile menu">
+                <a href="{{ route ('about') }}" class="{{ $context == 'about' ? 'active' : '' }} nav item">    
+                    <i class="icon mobile users layout"> </i>
+                    ABOUT
+                </a>
+                <a href= "{{ route('contact') }}" class="{{ $context == 'contact' ? 'active' : '' }} nav item">
+                    <i class="icon mobile phone layout"> </i>
+                    CONTACT
+                </a>
+            </div>
+            <a href="{{ route ('about') }}" class="desktop {{ $context == 'about' ? 'active' : '' }} nav item">    
+                <i class="icon mobile users layout"> </i>
                 ABOUT
             </a>
-            <a href= "{{ route('contact') }}" class="{{ $context == 'contact' ? 'active' : '' }} nav item">
+            <a href= "{{ route('contact') }}" class="desktop {{ $context == 'contact' ? 'active' : '' }} nav item">
+                <i class="icon mobile phone layout"> </i>
                 CONTACT
             </a>
+            @yield('menu.right')
 
             @if(!Auth::user())
-            <a id = "login" class="login-button nav item">
+            <a id = "login" class="login_button nav item">
                 LOGIN
             </a>
             <a href="{{ route('register') }}" class="{{ $context == 'register' ? 'active' : '' }} nav item">
                 SUBSCRIBE
             </a>
             @else
-            <a href="{{ route('home') }}" class="{{ $context == 'subscriber-home' ? 'active' : '' }}  nav labeled item">
-                <i class="icon home layout"> </i>
-                HOME
-            </a>
-            <!-- TO DO -->
-            <a href="{{ route('home') }}" class="nav labeled item">
-                <i class="icon lock layout"> </i>
-                CHANGE PASSWORD
-            </a>
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" class = "nav labeled item">
-                <button type = "submit"> 
-                    <i class="icon  layout sign out alternate"></i>
-                    LOGOUT 
-                </button>
-                {{ csrf_field() }}
-            </form>
+            <div class = "mobile menu">        
+                <a href="{{ route('home') }}" class="item">
+                    <i class="icon lock layout"> </i>
+                    CHANGE PASSWORD
+                </a>
+                <a id = "logout" class="logout_button item">
+                    <i class="icon layout sign out alternate"></i>
+                    LOGOUT
+                </a>
+            </div>
+            <div class="ui dropdown desktop inline item">  
+                Welcome    
+                {{Auth::user()->name}}!
+                <i class="dropdown icon"></i>
+                <div class="menu">
+                    <a href="{{ route('home') }}" class="item">
+                        <i class="icon lock layout"> </i>
+                        CHANGE PASSWORD
+                    </a>
+                    <a class="logout_button item">
+                        <i class="icon  layout sign out alternate"></i>
+                        LOGOUT
+                    </a>
+                </div>
+            </div>
             @endif
+        </div>
+        <div id = "logout_modal" class="ui  mini modal">
+            <div class = "icon header">                       
+                Logout Confirmation
+            </div>
+            <div class="content">
+                Are you sure you want to logout?
 
+                <form id="logout-form" action="{{ route('logout') }}" method="POST">
+                    <button class = "ui green button" type = "submit"> 
+                        Yes 
+                    </button>
+                    {{ csrf_field() }}
+                </form>
+            </div>
+            <div class = "actions"> 
+                <button class = " ui cancel red button"> 
+                    No 
+                </button>
+                <button class = "ui approve green button" type = "submit"> 
+                    Yes 
+                </button> 
+            </div>
         </div>
         <div id = "login_modal" class="ui  mini modal">
             <div class = "icon header">                       
                 <img src="{{ asset('favicon/favicon-16x16.png')}}">
-                SUBSCRIBER'S LOGIN
+                LOGIN
             </div>
             <div class="content">
                 <form method="POST" action="{{ route('login') }}" class="ui large form">
                     {{ csrf_field() }}
                     <div class = "wide field">
                         <label> ID Number </label>
-                        <input type="number" placeholder="e.g. 11526785">
+                        <input name = "idnum" type="text" placeholder="e.g. 11526785">
                     </div>
                     <div class = "wide field">
                         <label> Password </label>
-                        <input type="password" placeholder="Password">
+                        <input name="password" type="password" placeholder="Password">
                     </div>
 
                     <a class = "brand link inverted" href="{{ route('password.request') }}">
@@ -109,9 +154,11 @@
                     <br>
                     <button type="submit" id = "login_submit" class="ui green button"> LOGIN </button>
                     @if ($errors->any())
-                        <div class="ui red message" role="alert">
-                            Wrong Credentials
-                        </div>
+                    <div class="ui red message">
+                        @foreach ($errors->all() as $error)
+                            {{ $error }}<br>
+                        @endforeach
+                    </div>
                     @endif
                 </form>
             </div>

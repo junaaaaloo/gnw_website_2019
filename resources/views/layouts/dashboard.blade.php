@@ -27,9 +27,9 @@
                         </a>
                     </div>
                 </div>
-                <div class="main-menu">
-                    <ul id="side-main-menu" class="side-menu list-unstyled">                  
+                <div class="main-menu">          
                         @yield('navbar')
+                    <ul id="side-main-menu" class="side-menu list-unstyled">        
                         <li>
                             <a href="javascript:void(0)" id="changepass"><i class="fa fa-lock"></i><span>Change Password</span></a>
                         </li>

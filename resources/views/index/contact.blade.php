@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.app', ["context" => "contact"])
 
 @section('styles')
 <style>

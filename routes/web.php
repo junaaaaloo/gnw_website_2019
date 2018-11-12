@@ -32,29 +32,37 @@ Route::get('/verify/{idnum?}', function($idnum){
 });
 
 // Admins
-Route::get('/manage/registration', 'ManageRegIDController@index')->name('admin.manage.regid');
-Route::get('/manage/subscribers', 'ManageSubscribersController@index')->name('admin.manage.subs');
-Route::get('/manage/payment', 'ManagePaymentsController@index')->name('admin.manage.payments');
-Route::get('/create', 'ManageNewsController@create')->name('admin.create');
-Route::get('/manage/news', 'ManageNewsController@index')->name('admin.manage.news');
-Route::get('/manage/admin', 'ManageAdminController@index')->name('admin.manage.admin');
-Route::get('/manage/pictorial', 'SchedPictorialController@index')->name('admin.manage.pictorial');
-Route::post('/reserve/pictorial', 'SchedPictorialController@schedule')->name('admin.reserve.pictorial');
-Route::post('/view/timeslot', 'SchedPictorialController@view')->name('admin.view.timeslot');
-Route::post('/manage/subscribers/save', 'ManageSubscribersController@save')->name('admin.subscriber.save');
+Route::get('/manage/registration', 'Admin\ManageRegIDController@index')->name('admin.manage.regid');
+Route::get('/manage/subscribers', 'Admin\ManageSubscribersController@index')->name('admin.manage.subs');
+Route::get('/manage/payment', 'Admin\ManagePaymentsController@index')->name('admin.manage.payments');
+Route::get('/manage/news', 'Admin\ManageNewsController@index')->name('admin.manage.news');
+Route::get('/manage/admin', 'Admin\ManageAdminController@index')->name('admin.manage.admin');
 
+// Route::get('/manage/pictorial', 'Admin\SchedPictorialController@index')->name('admin.manage.pictorial');
+// Route::post('/reserve/pictorial', 'Admin\SchedPictorialController@schedule')->name('admin.reserve.pictorial');
+// Route::post('/view/timeslot', 'Admin\SchedPictorialController@view')->name('admin.view.timeslot');
+
+Route::post('/manage/subscribers/save', 'Admin\ManageSubscribersController@save')->name('admin.subscriber.save');
+
+Route::post('/create/id', 'Admin\ManageRegIDController@create')->name('id.create');
+Route::post('/edit/id', 'Admin\ManageRegIDController@edit')->name('id.edit');
+Route::post('/activate/id', 'Admin\ManageRegIDController@activate')->name('id.activate');
+Route::post('/pending/id', 'Admin\ManageRegIDController@pending')->name('id.pending');
 
 // Subscribers
-Route::get('/basic', 'BasicInfoController@index')->name('sub.basic');
-Route::get('/payment', 'PaymentController@index')->name('sub.payment');
-Route::get('/affiliations', 'AffiliationsController@index')->name('sub.affiliations');
-Route::get('/writeup', 'WriteUpController@index')->name('sub.writeup');
-Route::get('/survey', 'SurveyController@index')->name('survey');
+Route::get('/details', 'Subscriber\BasicInfoController@index')->name('sub.basic');
+Route::get('/payment', 'Subscriber\PaymentController@index')->name('sub.payment');
+Route::get('/affiliations', 'Subscriber\AffiliationsController@index')->name('sub.affiliations');
+Route::get('/writeup', 'Subscriber\WriteUpController@index')->name('sub.writeup');
+Route::get('/pictorial', 'Subscriber\SchedPictorialController@index')->name('sched.pictorial');
+
+Route::get('/survey', 'Subscriber\SurveyController@index')->name('survey');
+
 Route::post('/survey/submit', 'SurveyController@submit')->name('survey.submit');
-Route::get('/schedule/pictorial', 'SchedPictorialController@index')->name('sched.pictorial');
-Route::post('/schedule/pictorial', 'SchedPictorialController@chooseDate')->name('choose.date');
-Route::post('/schedule/pictorial/reserve', 'SchedPictorialController@reserve')->name('reserve.slot');
-Route::post('/schedule/pictorial/cancel', 'SchedPictorialController@cancel')->name('cancel.slot');
+
+// Route::post('/schedule/pictorial', 'SchedPictorialController@chooseDate')->name('choose.date');
+// Route::post('/schedule/pictorial/reserve', 'SchedPictorialController@reserve')->name('reserve.slot');
+// Route::post('/schedule/pictorial/cancel', 'SchedPictorialController@cancel')->name('cancel.slot');
 
 // No Views
 Route::middleware('auth')->post('/password/change', function(Illuminate\Http\Request $request){
@@ -69,16 +77,13 @@ Route::middleware('auth')->post('/password/change', function(Illuminate\Http\Req
 		return Response::json("error");
 	}
 });
-Route::post('/create/news', 'ManageNewsController@store')->name('news.store');
-Route::post('/edit/news', 'ManageNewsController@edit')->name('news.edit');
-Route::post('/delete/news', 'ManageNewsController@delete')->name('news.delete');
-Route::post('/create/id', 'ManageRegIDController@create')->name('id.create');
-Route::post('/edit/id', 'ManageRegIDController@edit')->name('id.edit');
-Route::post('/activate/id', 'ManageRegIDController@activate')->name('id.activate');
-Route::post('/pending/id', 'ManageRegIDController@pending')->name('id.pending');
-Route::post('/create/admin', 'ManageAdminController@create')->name('admin.store');
-Route::post('/edit/admin', 'ManageAdminController@edit')->name('admin.edit');
-Route::post('/delete/admin', 'ManageAdminController@delete')->name('admin.delete');
+
+Route::post('/create/news', 'Admin\ManageNewsController@store')->name('news.store');
+Route::post('/edit/news', 'Admin\ManageNewsController@edit')->name('news.edit');
+Route::post('/delete/news', 'Admin\ManageNewsController@delete')->name('news.delete');
+Route::post('/create/admin', 'Admin\ManageAdminController@create')->name('admin.store');
+Route::post('/edit/admin', 'Admin\ManageAdminController@edit')->name('admin.edit');
+Route::post('/delete/admin', 'Admin\ManageAdminController@delete')->name('admin.delete');
 Route::post('/affiliations/add', 'AffiliationsController@add')->name('aff.add');
 Route::post('/affiliations/delete', 'AffiliationsController@delete')->name('aff.delete');
 Route::post('/writeup/save', 'WriteUpController@save')->name('writeup.save');

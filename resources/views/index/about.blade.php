@@ -1,16 +1,17 @@
-@extends('layouts.app')
+@extends('layouts.app', ["context" => "about"])
 
 @section('styles')
 <style>
-    #about_gnw {
-        padding: 30px;
+    div#about {
+        margin: 40px 0px;
+        min-height: calc(100vh - 335px);
     }
 
 </style>
 @endsection
 
 @section('content') 
-<div id = "about_gnw">
+<div id = "about" class = "ui container">
     <h2> About Green & White </h2>
     <h3 class="ui horizontal divider header">
         HISTORY

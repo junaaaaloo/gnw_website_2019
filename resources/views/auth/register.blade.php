@@ -9,14 +9,6 @@
     button#register_submit {
         float: right
     }
-
-    /* .verify {
-        display: none;
-    }
-
-    #initial {
-        display: block;
-    } */
 </style>
 @endsection
 
@@ -80,7 +72,7 @@
         @if ($errors->any())
         <div class="ui red message">
             @foreach ($errors->all() as $error)
-                - {{ $error } }<br>
+                - {{ $error }}<br>
             @endforeach
         </div>
         @endif

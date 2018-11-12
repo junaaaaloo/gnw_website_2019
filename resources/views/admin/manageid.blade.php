@@ -1,159 +1,194 @@
-@extends('layouts.dashboard')
+@extends('admin.template', ["context"=>"admin.manage.registeredIDs"])
 
-@section('stylesheets')
-<link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet" type="text/css">
-<link href="{{ asset('css/font-awesome-4.7.0/css/font-awesome.min.css') }}" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="{{ asset('css/fontastic.css') }}">
-<link rel="stylesheet" href="{{ asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.css') }}">
-<link href="{{ asset('css/dataTables.bootstrap4.min.css') }}" rel="stylesheet" type="text/css">
-<link rel="stylesheet" href="{{ asset('css/style.green.css') }}" id="theme-stylesheet">
-<link href="{{ asset('css/dashboard.css') }}" rel="stylesheet" type="text/css">
-<link href="{{ asset('css/admindb.css') }}" rel="stylesheet" type="text/css">
-@endsection
-
-@section('navbar')
-<li>
-	<a href="{{ route('home') }}"><i class="fa fa-home"></i><span>Home</span></a>
-</li>
-<li> 
-    <a href="#sub-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-users"></i><span>Subscriber</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="sub-list" class="collapse list-unstyled">
-        <li class="active"> <a href="{{ route('admin.manage.regid') }}">Manage Registered IDs</a></li>
-        <li> <a href="{{ route('admin.manage.subs') }}">Manage Subscribers</a></li>
-        <li> <a href="{{ route('admin.manage.payments') }}">Manage Payment</a></li>
-        <li> <a href="{{ route('admin.manage.pictorial') }}">Manage Pictorial</a></li>
-    </ul>
-</li>
-<li> 
-    <a href="#announcement-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-paper-plane-o"></i><span>News</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="announcement-list" class="collapse list-unstyled">
-        <li> <a href="{{ route('admin.create') }}">Add News</a></li>
-        <li> <a href="{{ route('admin.manage.news') }}">Manage News</a></li>
-    </ul>
-</li>
-@if ($role === "Administrator")
-<li> 
-    <a href="#admin-list" data-toggle="collapse" aria-expanded="false"><i class="fa fa-group"></i><span>Admin</span>
-    <div class="arrow pull-right"><i class="fa fa-angle-down"></i></div></a>
-    <ul id="admin-list" class="collapse list-unstyled">
-        <li> <a href="{{ route('admin.manage.admin') }}">Manage Admin Accounts</a></li>
-    </ul>
-</li>
-@endif
+@section('substyles')
+<style>
+    div#manageids {
+        min-height: calc(100vh - 321px);
+    }
+</style>
 @endsection
 
 @section('content')
-<section class="dashboard-header section-padding">
-    <div class="container-fluid">
-        <h1>Manage Registered IDs &nbsp; &nbsp; <button class="btn btn-info" id="addID"><i class="fa fa-plus"></i>&nbsp;Add new ID</button></h1>
-        <small class="form-text text-muted">Status meanings: (1) Pending - Subscribed already but haven't answered the survey yet; (2) Active - Subscribed and finished answering the survey; (3) Inactive - Haven't subscribed yet.</small>
-        <br>
-        <table id="idTable" class="table table-bordered" cellspacing="0" width="100%">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID Number</th>
-                    <th>Status</th>
-                    <th>Created/Updated By</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($regIds as $regId)
-                <tr class="reg-row" data-id="{{ $regId->id }}" data-idnum="{{ $regId->idnum }}" data-status="{{ $regId->status }}">
-                    <td>{{ $regId->idnum }}</td>
-                    @switch($regId->status)
-                        @case(1)
-                        <td>Active</td>
-                        @break
-                        
-                        @case(-1)
-                        <td>Inactive</td>
-                        @break
-                        
-                        @case(0)
-                        <td>Pending</td>
-                        @break
-                    @endswitch
-                    <td>{{ $regId->added_by }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</section>
-
-<div class="modal fade" tabindex="-1" role="dialog" id="addIDModal">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('id.create') }}">
-                {{ csrf_field() }}
-                <div class="modal-header">
-                    <h5 class="modal-title">Add ID</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+<div id = "manageids" class = "ui brand page container">
+    <h2>
+        Manage Registered IDs
+    </h2>
+    <p>Status meanings: 
+        <br> (1) <i class="icon yellow time"></i> Pending - Subscribed already but haven't answered the survey yet; 
+        <br> (2) <i class="icon green check"></i> Active - Subscribed and finished answering the survey; 
+        <br> (3) <i class="icon red times"></i> Inactive - Haven't subscribed yet.
+    </p>
+    <th colspan = 5">
+        <form class = "ui form" id = "filtersort" method="GET">
+            <input name = "direction" type="hidden" value = "{{Request::get('direction')}}">
+            <input name = "sort" type="hidden" value = "{{Request::get('sort')}}">
+            <div class="ui two fields">  
+                <div class="field">
+                    <div class="ui action input">
+                        <input name = "filter" type="text" value="{{Request::get('filter')}}">
+                        <button type = "submit" class="ui button">
+                            <i class="icon search"> </i>
+                            Search
+                        </button>
+                    </div>
+                </div>
+                <div class="field">
+                    <button id = "addid_button" class="ui column green button">
+                        <i class="icon address card"> </i>
+                        Add ID
                     </button>
                 </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="idnum" placeholder="ID Number">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">Add</button>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
-            </form>
-        </div>
-    </div>
+            </div>
+        </form>
+    </th>
+    <table class="ui four column celled selectable sortable padded table">
+        <thead>
+            <tr class = "sortable">
+                <th class = "header {{Request::get('direction') == 'ASC' && Request::get('sort') == 'created_at' ? 'ascending' : 'descending'}} {{Request::get('sort') == 'created_at' ? 'sorted' : ''}} " data-column="created_at">Created At</th>
+                <th class = "header {{Request::get('direction') == 'ASC' && Request::get('sort') == 'idnum' ? 'ascending' : 'descending'}} {{Request::get('sort') == 'idnum' ? 'sorted' : ''}} " data-column="idnum">ID Number</th>
+                <th class = "header {{Request::get('direction') == 'ASC' && Request::get('sort') == 'status' ? 'ascending' : 'descending'}} {{Request::get('sort') == 'status' ? 'sorted' : ''}}" data-column="status">Status</th>
+                <th class = "header {{Request::get('direction') == 'ASC' && Request::get('sort') == 'added_by' ? 'ascending' : 'descending'}} {{Request::get('sort') == 'added_by' ? 'sorted' : ''}}" data-column="added_by">Added By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($regIds as $regId)
+            <tr onclick="accessRegisteredID({{$regId}})">
+                <td>{{ $regId->created_at }}</td>
+                <td>{{ $regId->idnum }}</td>
+                @switch($regId->status)
+                    @case(1)
+                    <td><i class="icon green check"></i> Active</td>
+                    @break
+                    
+                    @case(-1)
+                    <td><i class="icon red times"></i> Inactive</td>
+                    @break
+                    
+                    @case(0)
+                    <td><i class="icon yellow time"></i> Pending</td>
+                    @break
+                @endswitch
+                <td>{{ $regId->added_by }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr>
+                @if ($regIds->count() == 0) 
+                <th colspan = 5">
+                    No results returned. 
+                </th>
+                @else
+                <th colspan = 5">
+                    {{ $regIds->appends(["filter" => Request::get('filter'), "direction" => Request::get('direction'), "sort" => Request::get('sort')])->links('layouts.pagination')}} 
+                </th>
+                @endif
+            </tr>
+        </tfoot>
+    </table>
 </div>
 
-<div class="modal fade" tabindex="-1" role="dialog" id="editIDModal">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Edit ID</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form method="POST" action="{{ route('id.edit') }}">
-                {{ csrf_field() }}
-                <div class="modal-body">
-                        <div class="form-group">
-                            <label for="editidstatus">Status</label>
-                            <input type="text" class="form-control" id="editidstatus" disabled>
+<div id = "editid_modal" class="ui modal">
+    <i class="close icon"></i> 
+    <div class = "icon header">                       
+        <img src="{{ asset('favicon/favicon-16x16.png')}}">
+        EDIT ID
+    </div>
+    <div class="content"> 
+        <form class = "ui large form" method="POST" action="{{ route('id.edit') }}">    
+            {{ csrf_field() }}
+            <div class = "wide field">
+                <label for="editidstatus">Status</label>
+                <div id="editidstatus" class="ui disabled dropdown selection">
+                    <input type="hidden" name="editidstatus">
+                    <div class="text"> </div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" data-value="1"> 
+                            <i class="icon green check"> </i>
+                            Active
                         </div>
-                        <div class="form-group">
-                            <label for="editidnum">ID Number</label>
-                            <input type="text" class="form-control" name="editidnum" id="editidnum">
+                        <div class="item" data-value="0">
+                            <i class="icon yellow clock"> </i>
+                            Pending
                         </div>
-                        <input type="hidden" id="editid" name="editid">
-                </div>
-                <div class="modal-footer">
-                    <div id="editIDBtn">
-                        <button type="submit" class="btn btn-primary">Edit</button>
+                        <div class="item" data-value="-1">
+                            <i class="icon red times"> </i>
+                            Inactive
+                        </div>
+                        
                     </div>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
-                {{ csrf_field() }}
-            </form>
-        </div>
+            </div>
+            <div class = "wide field">
+                <label for="editidnum">ID Number</label>
+                <input type="text" name="editidnum" id="editidnum">
+            </div>
+            <input type="hidden" id="editid" name="editid">
+            <button type="submit" class="ui green button"> 
+                <i class="icon pencil"></i>
+                EDIT 
+            </button>
+            @if ($errors->any())
+            <div class="ui red message">
+                @foreach ($errors->all() as $error)
+                    {{ $error }}<br>
+                @endforeach
+            </div>
+            @endif
+        </form>
+    </div>
+</div>
+<div id = "addid_modal" class="ui small modal">
+    <i class="close icon"></i> 
+    <div class = "icon header">                       
+        ADD ID
+    </div>
+    <div class="content"> 
+        <form class = "ui large form" method="POST" action="{{ route('id.create') }}">    
+            {{ csrf_field() }}
+            
+            <div class = "wide field">
+                <label for="idnum">ID Number</label>
+                <input type="text" name="idnum">
+            </div>
+            <button type="submit" class="ui green button"> 
+                <i class="icon address card"></i>
+                ADD ID 
+            </button>
+            @if ($errors->any())
+            <div class="ui red message">
+                @foreach ($errors->all() as $error)
+                    {{ $error }}<br>
+                @endforeach
+            </div>
+            @endif
+        </form>
     </div>
 </div>
 @endsection
 
-@section('javascripts')
-<script src="{{ asset('js/jquery.min.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"> </script>
-<script src="{{ asset('js/bootstrap.min.js') }}"></script>
-<script src="{{ asset('js/grasp_mobile_progress_circle-1.0.0.min.js') }}"></script>
-<script src="{{ asset('vendor/jquery-validation/jquery.validate.min.js') }}"></script>
-<script src="{{ asset('vendor/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js') }}"></script>
-<script src="{{ asset('js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('js/dataTables.bootstrap4.min.js') }}"></script>
-<script src="{{ asset('js/front.js') }}"></script>
-<script src="{{ asset('js/admindb.js') }}"></script>
+@section('subscripts')
+<script>    
+$("th.header").on('click', (evt) => {
+    let column = $(evt.target).data('column')
+    let direction = $(evt.target).hasClass('ascending') ? "DESC" : "ASC"
+    $('form#filtersort input[name="sort"]').val(column)
+    $('form#filtersort input[name="direction"]').val(direction)
+    $("form#filtersort").submit()
+});
+
+$("#addid_button").click((evt) => {
+    evt.preventDefault()
+    $("#addid_modal").modal('show')
+})
+
+function accessRegisteredID (regID) {
+    $("#editid").val(regID.id)
+    $("#editidnum").val(regID.idnum)
+    $("#editidstatus").dropdown('set selected', regID.status)
+    
+    $("#editid_modal").modal('show')
+}
+</script>
 @endsection
