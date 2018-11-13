@@ -61,9 +61,32 @@ class ManageRegIDController extends Controller
         return redirect()->route('admin.manage.regid');
     }
 
+    public function loadCSV (Request $request) {
+        $text = $request->text_id;
+
+        $ids = explode("\r\n", $text);
+
+        foreach ($ids as $id) {
+            $regid = new RegisteredIds;
+            $regid->idnum = $id;
+            $regid->added_by = Auth::user()->name;
+            $regid->status = -1;
+            $regid->save();
+        }
+
+        return redirect()->route('admin.manage.regid');
+    }
+
     public function activate(Request $request) {
         $regid = RegisteredIds::find($request->editid);
         $regid->status = 1;
         $regid->save();
+    }
+
+    public function delete(Request $request) {
+        $regid = RegisteredIds::find($request->deleteid);
+        $regid->delete();
+
+        return redirect()->route('admin.manage.regid');
     }
 }

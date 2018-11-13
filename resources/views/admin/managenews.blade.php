@@ -96,17 +96,14 @@
                     <i class="icon paper plane"></i>
                     UPDATE
                 </button>
-            </form>
-            
-              
-            <form id="deletenews" method="POST" action="{{ route('news.delete') }}">
-                <input type="hidden" id="deleteid" name="deleteid">
-                {{ csrf_field() }}
-                
-                <button id ="delete" class="ui red button"> 
+                <button onclick="event.preventDefault(); deleteNews();" class="ui red button"> 
                     <i class="icon times"></i>
                     DELETE
                 </button>
+            </form>
+            <form id="deletenews" method="POST" action="{{ route('news.delete') }}">
+                <input type="hidden" id="deleteid" name="deleteid">
+                {{ csrf_field() }}
             </form>
         </div>
         
@@ -122,18 +119,21 @@ $(".addnews_button").click(() => {
     $("#addnews_modal").modal('show')
 })
 
+function deleteNews (event) {
+    $("form#deletenews").submit();
+}
+
 function accessAnnouncement (announcement) {
     $("#view_subject").val(announcement.subject)
     $("#view_message").val(announcement.message)
     $("#view_createdby").val(announcement.created_by)
-    $("#viewnews_modal").modal('show')
-
     $("#editsubject").val(announcement.subject)
     $("#editmessage").val(announcement.message)
     $("#editid").val(announcement.id)
     $("#editby").val(user)
 
     $("#deleteid").val(announcement.id)
+    $("#viewnews_modal").modal('show')
 }
 </script>
 @endsection

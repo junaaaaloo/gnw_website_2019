@@ -124,6 +124,8 @@
     <div class="content"> 
         <form class = "ui large form" method="POST" action="{{ route('payment.status.update') }}">
             {{ csrf_field() }}
+            
+            <input type="hidden" name="idnum" id="idnum_field">
             <div class = "ui three fields">
                 <div class="field">
                     <label for="yearbookStatus"> Yearbook </label>
@@ -171,7 +173,7 @@
                 </div>
                 <div class="field">
                     <label for="deliveryStatus"> Delivery </label>
-                    <div id="deliveryStatus" class="ui  dropdown selection">
+                    <div id="deliveryStatus" class="ui dropdown selection">
                         <input type="hidden" name="deliveryStatus">
                         <div class="text"> </div>
                         <i class="dropdown icon"></i>
@@ -220,10 +222,10 @@ $("th.header").on('click', (evt) => {
 
 
 function accessPayment (payment) {
-    $("#yearbookStatus").dropdown('set selected', payment.yearbookStatus)
-    $("#photoStatus").dropdown('set selected', payment.photoStatus)
-    $("#deliveryStatus").dropdown('set selected', payment.deliveryStatus)
-
+    $("#yearbookStatus").dropdown('set selected', payment.yearbookStatus.toString())
+    $("#photoStatus").dropdown('set selected', payment.photoStatus.toString())
+    $("#deliveryStatus").dropdown('set selected', payment.deliveryStatus.toString())
+    $("#idnum_field").val(payment.idnum)
     $("#payment_modal").modal('show')
 }
 </script>

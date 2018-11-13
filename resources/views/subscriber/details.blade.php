@@ -8,15 +8,39 @@
 <style>
     div#basic_information_page {
         margin: 50px 0px 100px 0px;
-        min-height: 40vh;
         min-height: calc(100vh - 405px);
+    }
+
+    #message {
+        display: none;
     }
 </style>
 @endsection
 
 @section('content')
-<div id = "basic_information_page" method="POST" action="{{route('basic.save')}}" class = "ui container">
-    <form class = "ui form">
+<div id = "basic_information_page" class = "ui container">
+    <form id = "info" class = "ui form" method="POST" action="{{route('basic.save')}}">
+        @if (Session::has('status'))
+        <div class="ui blue message" role="alert">
+            {{ Session::get('status') }}
+        </div>
+        @endif
+        <button id = "edit" class="ui blue button">
+            <i class="icon edit"> </i> 
+            Edit
+        </button>
+        <button id = "save" disabled class="ui green button" type="submit">
+            <i class="icon save"> </i> 
+            Save
+        </button>
+        <button id = "discard" disabled class="ui red button">
+            <i class="icon times"> </i> 
+            Discard Changes
+        </button>
+        <div id="message" class="ui green message">
+            You may now edit your information. Please ensure that your data is complete.
+        </div>
+        
         {{ csrf_field() }}
         <div class = "ui accordion">
             <div class="active title">
@@ -28,7 +52,7 @@
                     <div class="four fields">
                         <div class="field">
                             <label for="firstname">First Name</label>
-                            <input type="text"  name="firstname" value="{{ $subbie->firstname }}" disabled  required>
+                            <input type="text"  name="firstname" value="{{ $subbie->firstname }}" disabled  >
                         </div>
                         <div class="field">
                             <label for="middlename">Middle Name</label>
@@ -36,7 +60,7 @@
                         </div>
                         <div class="field">
                             <label for="lastname">Last Name</label>
-                            <input type="text" name="lastname" disabled  value="{{ $subbie->lastname }}" required>
+                            <input type="text" name="lastname" disabled  value="{{ $subbie->lastname }}" >
                         </div>
                         <div class="field">
                             <label for="suffix"> Suffix</label>
@@ -60,7 +84,7 @@
                         </div>
                         <div class="field">
                             <label for="nickname">Nickname</label>
-                            <input type="text" placeholder="Nickname" id="nickname" disabled  name="nickname" value="{{ $subbie->nickname }}" required>
+                            <input type="text" placeholder="Nickname" id="nickname" disabled  name="nickname" value="{{ $subbie->nickname }}" >
                         </div>
                     </div>
                 </div>   
@@ -129,7 +153,7 @@
                             </div>
                         </div>
                         <div class="field">
-                            <input type="text" placeholder="Year" disabled  name="year" value="{{ $subbie->bday_year }}" required>
+                            <input type="text" placeholder="Year" disabled  name="year" value="{{ $subbie->bday_year }}" >
                         </div>
                     </div>
                 </div>
@@ -172,29 +196,29 @@
             <div class="active content">
                 <div class="field">
                     <label for="idn">ID Number</label>
-                    <input type="text" id="idn" placeholder="e.g 11234567" name="idnum" value="{{ $subbie->idnum }}" required disabled >
+                    <input type="text" id="idn" placeholder="e.g 11234567" name="idnum" value="{{ $subbie->idnum }}"  disabled >
                 </div>
                 <div class="field">
                     <div class="fields two">
                         <div class="field">
                             <label for="nde">Non-DLSU Email</label>
-                            <input type="email" id="nde" placeholder="example@domain.com" name="nondlsu" value="{{ $subbie->non_dlsu_email }}" disabled  required>
+                            <input type="email" id="nde" name="nondlsu" value="{{ $subbie->non_dlsu_email }}" disabled  >
                         </div>
                         <div class="field">
-                            <label for="nde">DLSU Email</label>
-                            <input type="email" id="nde" placeholder="example@dlsu.edu.ph" name="dlsu" value="{{ $subbie->dlsu_email }}" disabled  required>
+                            <label for="de">DLSU Email</label>
+                            <input type="email" id="de" name="dlsu" value="{{ $subbie->dlsu_email }}" disabled  >
                         </div>
                     </div>
                 </div>
                 <div class="field">
                     <div class="fields two">
                         <div class="field">
-                            <label for="pnb">Mobile Number</label>
-                            <input type="text" id="pnb" placeholder="9221234567" name="mobile" value="{{ $subbie->mobile }}" disabled >
+                            <label for="mb">Mobile Number</label>
+                            <input type="text" id="mb" name="mobile" value="{{ $subbie->mobile }}" disabled >
                         </div>
                         <div class="field">
                             <label for="pnb">Landline</label>
-                            <input type="text" id="pnb" placeholder="123 4567" name="landline" value="{{ $subbie->landline }}" disabled >
+                            <input type="text" id="pnb" name="landline" value="{{ $subbie->landline }}" disabled >
                         </div>
                     </div>
                 </div>
@@ -210,11 +234,11 @@
                     <div class="ui two fields">   
                         <div class="field">
                             <label for="province">Province</label>
-                            <input id="province"  placeholder="Enter Province" style="width: 100%;" name="province" value="{{ $subbie->province }}" disabled  required>
+                            <input id="province"  placeholder="Enter Province" style="width: 100%;" name="province" value="{{ $subbie->province }}" disabled  >
                         </div>
                         <div class="field">
                             <label for="city">City/Municipality</label>
-                            <input id="city" name="city" value="{{ $subbie->city }}"  placeholder="" disabled  required>
+                            <input id="city" name="city" value="{{ $subbie->city }}"  placeholder="" disabled  >
                         </div>
                     </div>
                     <div class="ui two fields"> 
@@ -244,25 +268,33 @@
                 </div>
             </div>
         </div>
-        @if (Session::has('status'))
-        <div class="ui blue message" role="alert">
-            {{ Session::get('status') }}
-        </div>
-        @endif
-        <button disabled class="ui green right floated button" type="submit">
-            <i class="icon save"> </i> 
-            Save
-        </button>
-        <div id = "edit" class="ui blue right floated button">
-            <i class="icon edit"> </i> 
-            Edit
-        </div>
     </form>
 </div>
 @endsection
 
 @section('subscripts')
 <script>
-    $('.ui.accordion').accordion();
+function openform () {
+    $("#save").attr('disabled', null)
+    $("#discard").attr('disabled', null)
+
+    $("#message").slideDown()
+    $(".ui.dropdown").removeClass('disabled')
+    $("input").attr('disabled', null)
+    
+    $("#edit").attr('disabled', '')
+}
+
+
+$("#edit").click((e) => {
+    e.preventDefault
+    openform()
+})
+
+$("#discard").click((e) => {
+    e.preventDefault()
+    location.reload()
+})
+
 </script>
 @endsection

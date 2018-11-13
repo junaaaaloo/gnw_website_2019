@@ -17,7 +17,7 @@ class HomeController extends Controller {
      * @return void
      */
     public function __construct() {
-        
+        $this->middleware("auth");
     }
 
     /**
@@ -31,31 +31,26 @@ class HomeController extends Controller {
         $title = "Home";
         if($user->hasRole('subscriber')) {
             $reg = RegisteredIds::where('idnum', $user->idnum)->first();
+            
             if($reg->status == 0) {
                 return redirect()->route('survey');
-            } else if($reg->status == 1) {
-                $announcements = Announcement::all();
-                $collection = collect($announcements);
-                $reversed = $collection->reverse();
-                $reversed->all();
-
-                return view('subscriber/home', ['title' => $title, 'role' => 'Subscriber',
-                    'announcements' => $reversed]);
             }
-        } else if ($user->hasRole('administrator') || $user->hasRole('editor')) {
-            $date_today = date("l") . ", " . date("Y/m/d");
+
+            $announcements = Announcement::all();
+            $collection = collect($announcements);
+            $reversed = $collection->reverse();
+            $reversed->all();
+
+            return view('subscriber/home', ['announcements' => $reversed]);
+        } 
+        
+        if ($user->hasRole('administrator') || $user->hasRole('editor')) {
             $regIds = RegisteredIds::count();
             $subbies = Subscriber::count();
             $surveys = Survey::count();
             $paid = Payment::where('status', '1')->count();
 
-            $role = "Administrator";
-            if($user->hasRole('editor')) {
-                $role = "Editor";
-            }
-
-            return view('admin/home', 
-                ['title' => $title, 'role' => $role, 'date_today' => $date_today, 'regIds'=> $regIds, 'subbies' => $subbies, 'surveys' => $surveys, 'paid' => $paid]);
+            return view('admin/home', ['regIds'=> $regIds, 'subbies' => $subbies, 'surveys' => $surveys, 'paid' => $paid]);
         }
     }
 }

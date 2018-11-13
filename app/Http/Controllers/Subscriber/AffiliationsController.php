@@ -35,8 +35,8 @@ class AffiliationsController extends Controller {
         $aff->idnum = $user->idnum;
         $aff->organization = $request->organization;
         $aff->position = $request->position;
-        $aff->start_year = $request->yearstart;
-        $aff->end_year = $request->yearend;
+        $aff->start_year = $request->start_year;
+        $aff->end_year = $request->end_year;
         $aff->save();
 
         return redirect()->route('sub.affiliations');

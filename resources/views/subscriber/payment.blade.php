@@ -21,6 +21,7 @@
             <div class="content">
                 <div class="header"> Yearbook </div>
                 <form method = "POST" class = "ui form" action = "{{ route('payment.submit.yearbook')}}">
+                    {{csrf_field()}}
                     <div class="field">
                         <label for="yearbookStatus"> Status </label>
                         <div class="ui disabled dropdown selection">
@@ -45,19 +46,19 @@
                     </div>
                     <div class="field">
                         <label for="yearbookOR"> Yearbook OR# </label>
-                        <input type="text" type = "text" name="yearbookOR" value = "{{$payment->yearbookOR}}" disabled>
+                        <input type="text" type = "text" name="yearbookOR" value = "{{$payment->yearbookOR}}">
                     </div>
                     <div class="field">
                         <div class="ui checkbox">
-                            <input type="checkbox" value = "{{$payment->isPartial === 'yes'}}" disabled>
+                            <input type="checkbox" value = "{{$payment->isPartial === 'yes'}}">
                             <label>Is this partial payment?</label>
                         </div>
                     </div>
                     <div class="field">
                         <label for="partialOR"> Partial OR# </label>
-                        <input type="text" type = "text" placeholder="Partial OR#" value = "{{$payment->partialOR}}" disabled>
+                        <input type="text" type = "text" placeholder="Partial OR#" value = "{{$payment->partialOR}}">
                     </div>
-                    <button disabled class="ui right floated green button">
+                    <button class="ui right floated green button">
                         <i class="icon save"></i>
                         Update
                     </button>
@@ -68,6 +69,7 @@
             <div class="content">
                 <div class="header"> Photo </div>
                 <form method = "POST" class = "ui form" action = "{{ route('payment.submit.photo')}}">
+                    {{csrf_field()}}
                     <div class="field">
                         <label for="photoStatus"> Status </label>
                         <div class="ui disabled dropdown selection">
@@ -93,7 +95,7 @@
                     </div>
                     <div class="field">
                         <label for="photoOR"> Photo OR# </label>
-                        <input type="text" type = "text" name="photoOR" value = "{{$payment->photoOR}}" disabled>
+                        <input type="text" type = "text" name="photoOR" value = "{{$payment->photoOR}}">
                     </div>
                     <div class="field">
                         <label for="photoPackage"> Photo Package </label>
@@ -117,7 +119,7 @@
                             </div>
                         </div>
                     </div>
-                    <button disabled class="ui right floated green button">
+                    <button class="ui right floated green button">
                         <i class="icon save"></i>
                         Update
                     </button>
@@ -128,6 +130,7 @@
             <div class="content">
                 <div class="header"> Delivery </div>
                 <form method = "POST" class = "ui form" action = "{{ route('payment.submit.delivery')}}">
+                    {{csrf_field()}}
                     <div class="field">
                         <label for="deliveryStatus"> Status </label>
                         <div class="ui disabled dropdown selection">
@@ -152,9 +155,9 @@
                     </div>
                     <div class="field">
                         <label for="deliveryOR"> Delivery OR# </label>
-                        <input type="text" type = "text" name="deliveryOR" value = "{{$payment->deliveryOR}}" disabled>
+                        <input type="text" type = "text" name="deliveryOR" value = "{{$payment->deliveryOR}}">
                     </div>
-                    <button disabled class="ui right floated green button">
+                    <button class="ui right floated green button">
                         <i class="icon save"></i>
                         Update
                     </button>

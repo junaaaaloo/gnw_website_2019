@@ -47,3 +47,7 @@ $('.logout_button').click(() => {
 
     $("#logout_modal").modal('show')
 })
+
+$(".change-pass_button").click(() => {
+    $("#changepassword_modal").modal('show')
+})

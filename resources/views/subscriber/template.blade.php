@@ -5,7 +5,6 @@
 @endsection
 
 @section('styles')
-    <link href="{{asset('css/sidebar.css')}}" rel="stylesheet">
     @yield('substyles')
 @endsection
 
@@ -23,10 +22,10 @@
             <i class="icon user"></i>
             <span>BASIC INFORMATION</span>
         </a>
-        <!-- <a data-value = "subscriber.payment_info" href="{{ route('sub.payment') }}" class = "item">
+        <a data-value = "subscriber.payment_info" href="{{ route('sub.payment') }}" class = "item">
             <i class="icon credit card"></i>
             <span>PAYMENT INFORMATION<span>
-        </a> -->
+        </a>
         <a data-value = "subscriber.affiliations" href="{{ route('sub.affiliations') }}" class = "item">
             <i class="icon star"></i>
             <span>AFFILIATIONS</span>
@@ -35,10 +34,10 @@
             <i class="icon pencil"></i>
             <span>WRITE UP</span>
         </a>
-        <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
+        <!-- <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
             <i class="icon calendar check"></i>
             <span>SCHEDULE PICTORIAL </span>
-        </a>
+        </a> -->
     </div>
 </div>
 <div class = "menu mobile">
@@ -112,6 +111,5 @@
 @endsection
 
 @section('scripts')
-<script src="{{ asset('js/pw.js') }}"></script>
 @yield('subscripts')
 @endsection

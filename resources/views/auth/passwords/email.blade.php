@@ -1,36 +1,25 @@
-@extends('layouts.logsub')
+@extends('layouts.app', ["context"=>"email"])
+
+@section('styles')
+<style>
+div#email_send {
+    margin: 50px 0px 100px 0px;
+    min-height: calc(100vh - 405px);
+}
+</style>
+@endsection
 
 @section('content')
-<div class="container main">
-    <div class="loginrow">
-        <div class="done-section" id="forgotDiv">
-            <div class="header text-right" id="back">
-                <a href="{{ route('home') }}"><span class="back text-right"><span class="fa fa-angle-left"></span>&nbsp; Back</span></a>
-            </div>
-            <hr/>
-            <form method="POST" action="{{ route('password.email') }}">
-                {{ csrf_field() }}
-                <div class="form-group">
-                    <label class="lbl" for="inputID">ID Number</label>
-                    <input type="text" class="form-control" id="inputID" name="idnum" aria-describedby="emailHelp" placeholder="e.g 11245678" required>
-                    <small id="emailHelp" class="form-text text-muted">An email will be sent to you shortly</small>
-                </div>
-                @if (Session::has('status'))
-                <div class="alert alert-success" role="alert">
-                    {{ Session::get('status') }}
-                </div>
-                @endif
-
-                @if ($errors->any())
-                <div class="alert alert-danger" role="alert">
-                    @foreach ($errors->all() as $errors)
-                        {{ $errors }}
-                    @endforeach
-                </div>
-                @endif
-                <button type="submit" class="btn btn-block btn-success">Send me an email</button>
-            </form>
+<div id="email_send" class="ui container brand page">
+    <form class = "ui form" method = "POST" action="{{route('password.email')}}">
+        {{ csrf_field() }}
+        <div class="field">
+            <label for="idnum"> ID Number </label>
+            <input type="text" class="form-control" id="inputID" name="idnum" aria-describedby="emailHelp" placeholder="e.g 11245678" required>
+            <small id="emailHelp" class="form-text text-muted">An email will be sent to you shortly</small>    
         </div>
-    </div>
+        
+        <button type="submit" class="ui green button">Send me an email</button>
+    </form>
 </div>
 @endsection

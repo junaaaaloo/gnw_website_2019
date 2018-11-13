@@ -10,8 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ManageAdminController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct() {
         $this->middleware('auth');
         $this->middleware('admin');
     }
@@ -20,12 +19,15 @@ class ManageAdminController extends Controller
         $user = Auth::user();
         $title = "Home";
 
-        $adminUsers = User::whereRoleIs('administrator')->get();
-        $editUsers = User::whereRoleIs('editor')->get();
-
+        $users = User::whereHas(
+            'roles', function($query){
+                $query->where('name', 'administrator');
+                $query->orWhere('name', 'editor');
+            }
+        )->orderBy('created_at', 'DESC')->get();
+        
         return view('admin/manageadmin', 
-            ['adminusers' => $adminUsers, 'editusers' => $editUsers]);
-
+            ['users' => $users]);
     }
 
     public function create(Request $request) {
@@ -51,13 +53,13 @@ class ManageAdminController extends Controller
         $user = User::find($request->id);
         $user->name = $request->name;
         $user->position = $request->position;
+        $user->email = $request->email;
         $user->save();
 
         return redirect()->route('admin.manage.admin');
     }
 
-    public function delete(Request $request)
-    {
+    public function delete(Request $request) {
         $user = User::find($request->deleteid);
         $user->delete();
 

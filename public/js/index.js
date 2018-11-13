@@ -7,6 +7,6 @@ $.ajaxSetup({
 
 $('.ui.dropdown').dropdown();
 $('.ui.accordion').accordion();
-$('.ui.modal').modal({
-    closable: true
-})
+$('.ui.radio.checkbox').checkbox();
+$('.ui.accordion').accordion();
+$('.ui.modal').modal()

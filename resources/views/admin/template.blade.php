@@ -11,7 +11,7 @@
 @section('menu.left')
 <div id = "subscriber_menu" class="desktop ui dropdown item">
     <input type="hidden" name="subscriber_menu" value="{{$context or 'subscriber.announcements'}}">
-    <div class = "text"> </div>
+    <div class ="text"> </div>
     <i class="dropdown icon"></i>
     <div class="menu">
         <a data-value = "admin.home" class="item"  href="{{ route('home') }}">
@@ -37,7 +37,6 @@
                     <i class="icon credit card"></i>
                     MANAGE PAYMENT
                 </a>
-                
             </div>
         </div>
         <a data-value = "admin.manage.announcements" href="{{ route('admin.manage.news') }}" class="item">  
@@ -52,6 +51,13 @@
         @endif
     </div>
 </div>
+@if ($context == "admin.manage.subscribers")
+@isset($subbie)
+<div class="desktop item">
+    SUBSCRIBER: {{$subbie->lastname}}, {{$subbie->firstname}}
+</div>  
+@endisset
+@endif
 <div class = "menu mobile">
     <a data-value = "admin.home" class="item"  href="{{ route('home') }}">
         <i class="icon home"> </i>

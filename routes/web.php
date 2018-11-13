@@ -14,6 +14,7 @@
 Route::get('/', 'StartController@index')->name('index');
 Route::get('/about', 'StartController@about')->name('about');
 Route::get('/contact', 'StartController@contact')->name('contact');
+Route::post('/email', 'StartController@email')->name('email');
 
 Auth::routes();
 
@@ -31,7 +32,6 @@ Route::get('/verify/{idnum?}', function($idnum){
 	return Response::json("valid");
 });
 
-// Admins
 Route::get('/manage/registration', 'Admin\ManageRegIDController@index')->name('admin.manage.regid');
 Route::get('/manage/subscribers', 'Admin\ManageSubscribersController@index')->name('admin.manage.subs');
 Route::get('/manage/payment', 'Admin\ManagePaymentsController@index')->name('admin.manage.payments');
@@ -47,9 +47,10 @@ Route::post('/manage/subscribers/save', 'Admin\ManageSubscribersController@save'
 Route::post('/create/id', 'Admin\ManageRegIDController@create')->name('id.create');
 Route::post('/edit/id', 'Admin\ManageRegIDController@edit')->name('id.edit');
 Route::post('/activate/id', 'Admin\ManageRegIDController@activate')->name('id.activate');
+Route::post('/delete/id', 'Admin\ManageRegIDController@delete')->name('id.delete');
 Route::post('/pending/id', 'Admin\ManageRegIDController@pending')->name('id.pending');
+Route::post('/csv/id', 'Admin\ManageRegIDController@loadCSV')->name('id.csv');
 
-// Subscribers
 Route::get('/details', 'Subscriber\BasicInfoController@index')->name('sub.basic');
 Route::get('/payment', 'Subscriber\PaymentController@index')->name('sub.payment');
 Route::get('/affiliations', 'Subscriber\AffiliationsController@index')->name('sub.affiliations');
@@ -58,91 +59,53 @@ Route::get('/pictorial', 'Subscriber\SchedPictorialController@index')->name('sch
 
 Route::get('/survey', 'Subscriber\SurveyController@index')->name('survey');
 
-Route::post('/survey/submit', 'SurveyController@submit')->name('survey.submit');
+Route::post('/survey/submit', 'Subscriber\SurveyController@submit')->name('survey.submit');
 
 // Route::post('/schedule/pictorial', 'SchedPictorialController@chooseDate')->name('choose.date');
 // Route::post('/schedule/pictorial/reserve', 'SchedPictorialController@reserve')->name('reserve.slot');
 // Route::post('/schedule/pictorial/cancel', 'SchedPictorialController@cancel')->name('cancel.slot');
 
-// No Views
 Route::middleware('auth')->post('/password/change', function(Illuminate\Http\Request $request){
 	$user = Illuminate\Support\Facades\Auth::user();
-    if (Hash::check($request->curr, $user->password)) {
-    	$password = bcrypt($request->newPass);
-    	$user = Illuminate\Support\Facades\Auth::user();
-    	$user->password = $password;
-    	$user->save();
-	    return Response::json("success");
-	} else {
-		return Response::json("error");
+	if ($request->new_password != $request->confirm_new_password) {
+		return redirect()->back()->with('password_change', 'Passwords did not match.');
 	}
-});
+
+	if (!Hash::check($request->current_password, $user->password)) {
+		return redirect()->back()->with('password_change', 'Current password is wrong.');
+	}
+
+    $password = bcrypt($request->new_password);
+	$user = Illuminate\Support\Facades\Auth::user();
+	$user->password = $password;
+	$user->save();
+	return redirect()->back()->with('password_change', 'Password Successfully Changed!');
+
+})->name('password.change');
 
 Route::post('/create/news', 'Admin\ManageNewsController@store')->name('news.store');
 Route::post('/edit/news', 'Admin\ManageNewsController@edit')->name('news.edit');
 Route::post('/delete/news', 'Admin\ManageNewsController@delete')->name('news.delete');
+
 Route::post('/create/admin', 'Admin\ManageAdminController@create')->name('admin.store');
 Route::post('/edit/admin', 'Admin\ManageAdminController@edit')->name('admin.edit');
 Route::post('/delete/admin', 'Admin\ManageAdminController@delete')->name('admin.delete');
-Route::post('/affiliations/add', 'AffiliationsController@add')->name('aff.add');
-Route::post('/affiliations/delete', 'AffiliationsController@delete')->name('aff.delete');
-Route::post('/writeup/save', 'WriteUpController@save')->name('writeup.save');
-Route::post('/basic/save', 'BasicInfoController@save')->name('basic.save');
-Route::post('/payment/yearbook', 'PaymentController@updateYearbook')->name('payment.submit.yearbook');
-Route::post('/payment/photo', 'PaymentController@updatePhoto')->name('payment.submit.photo');
-Route::post('/payment/delivery', 'PaymentController@updateDelivery')->name('payment.submit.delivery');
-Route::post('/manage/payment/update', 'PaymentController@updateStatus')->name('payment.status.update');
 
-Route::get('manage/subscribers/{idnum?}', function($idnum){
-	$user = Auth::user();
-    $title = "Home";
+Route::post('/affiliations/add', 'Subscriber\AffiliationsController@add')->name('aff.add');
+Route::post('/affiliations/delete', 'Subscriber\AffiliationsController@delete')->name('aff.delete');
 
-    if($user->hasRole('subscriber')) {
-        $announcements = App\Announcement::all();
-        $collection = collect($announcements);
-        $reversed = $collection->reverse();
-        $reversed->all();
+Route::post('/writeup/save', 'Subscriber\WriteUpController@save')->name('writeup.save');
+Route::post('/basic/save', 'Subscriber\BasicInfoController@save')->name('basic.save');
 
-        return view('home', ['title' => $title, 'role' => 'Subscriber',
-            'announcements' => $reversed]);
+Route::post('/payment/yearbook', 'Subscriber\PaymentController@updateYearbook')->name('payment.submit.yearbook');
+Route::post('/payment/photo', 'Subscriber\PaymentController@updatePhoto')->name('payment.submit.photo');
+Route::post('/payment/delivery', 'Subscriber\PaymentController@updateDelivery')->name('payment.submit.delivery');
+Route::post('/manage/payment/update', 'Subscriber\PaymentController@updateStatus')->name('payment.status.update');
 
-    } else if ($user->hasRole('administrator') || $user->hasRole('editor')) {
-    	$title = "View Subscriber";
-        $subbie = App\Subscriber::find($idnum);
-        $aff = App\Affiliation::where('idnum', $subbie->idnum)->get();
-
-        $role = "Administrator";
-        if($user->hasRole('editor')) {
-            $role = "Editor";
-        }
-
-        return view('subscriber', ['title' => $title, 'role' => $role, 'subbie' =>  $subbie, 'affiliations' => $aff]);
-    }
-})->middleware('auth');
 Route::get('manage/subscriber/{idnum?}', function($idnum){
 	$user = Auth::user();
-    $title = "Home";
+    $subbie = App\Subscriber::find($idnum);
+    $aff = App\Affiliation::where('idnum', $subbie->idnum)->get();
 
-    if($user->hasRole('subscriber')) {
-        $announcements = App\Announcement::all();
-        $collection = collect($announcements);
-        $reversed = $collection->reverse();
-        $reversed->all();
-
-        return view('home', ['title' => $title, 'role' => 'Subscriber',
-            'announcements' => $reversed]);
-
-    } else if ($user->hasRole('administrator') || $user->hasRole('editor')) {
-    	$title = "View Subscriber";
-        $subbie = App\Subscriber::find($idnum);
-        $aff = App\Affiliation::where('idnum', $subbie->idnum)->get();
-
-        $role = "Administrator";
-        if($user->hasRole('editor')) {
-            $role = "Editor";
-        }
-        // var_dump($subbies);
-        return view('subscriber', ['title' => $title, 
-            'role' => $role, 'subbie' =>  $subbie, 'affiliations' => $aff]);
-    }
-})->middleware('auth');
+    return view('admin/subscriber', ['subbie' =>  $subbie, 'affiliations' => $aff]);
+})->middleware('auth','admin_editor');

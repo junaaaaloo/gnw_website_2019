@@ -3,7 +3,8 @@
 @section('substyles')
 <style>
     div#managesubscribers {
-        min-height: calc(100vh - 321px);
+        margin: 50px 0px 100px 0px;
+        min-height: calc(100vh - 405px);
     }
 </style>
 @endsection

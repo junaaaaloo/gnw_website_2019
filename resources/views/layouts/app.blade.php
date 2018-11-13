@@ -6,6 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="description" content="Founded in 1924 as the first student organization of De La Salle College, Green & White came to be the official yearbook publication of DLSC in 1938. Over ninety years since its birth, we continue the legacy of capturing images of Lasallian excellence and providing the Lasallian community a testimonial of its brilliant history.">
+    <meta name="keywords" content="DLSU, Green & White, Excellence, LaSallian, GNW, G&W">
+
     <title> Green &amp; White </title>
 
     <!-- FAVICON -->
@@ -81,6 +84,7 @@
                 SUBSCRIBE
             </a>
             @else
+            
             <div class = "mobile menu">        
                 <a href="{{ route('home') }}" class="item">
                     <i class="icon lock layout"> </i>
@@ -96,7 +100,7 @@
                 {{Auth::user()->name}}!
                 <i class="dropdown icon"></i>
                 <div class="menu">
-                    <a href="{{ route('home') }}" class="item">
+                    <a class="change-pass_button item">
                         <i class="icon lock layout"> </i>
                         CHANGE PASSWORD
                     </a>
@@ -132,6 +136,7 @@
             </div>
         </div>
         <div id = "login_modal" class="ui  mini modal">
+            <i class="icon close"></i>
             <div class = "icon header">                       
                 <img src="{{ asset('favicon/favicon-16x16.png')}}">
                 LOGIN
@@ -163,6 +168,36 @@
                 </form>
             </div>
         </div>
+        <div id = "changepassword_modal" class="ui modal">
+            <i class="icon close"></i>
+            <div class = "icon header">                       
+                <img src="{{ asset('favicon/favicon-16x16.png')}}">
+                CHANGE PASSWORD
+            </div>
+            <div class="content">
+                <form class = "ui form" action="{{route('password.change')}}" method = "POST">
+                    {{ csrf_field() }}
+                    <div class="field">
+                        <label for="currPass">Current Password</label>
+                        <input type="password" name = "current_password" class="form-control" id="currPass" required>
+                    </div>
+                    <div class="field">
+                        <label for="newPass">New Password</label>
+                        <input type="password" name = "new_password" class="form-control" id="newPass" required>
+                    </div>
+                    <div class="field">
+                        <label for="confNewPass">Confirm New Password</label>
+                        <input type="password" name = "confirm_new_password" class="form-control" id="confNewPass" required>
+                    </div>
+                    <button type="submit" class="ui green button">Change Password</button>
+                    @if (Session::has('password_change'))
+                    <div class = "ui message"> 
+                        {!! Session::get('password_change') !!}
+                    </div>
+                    @endif
+                </form>
+            </div>
+        </div>
     </nav>
     <div id="content"> 
         @yield('content')
@@ -186,12 +221,25 @@
     <!-- SCRIPTS -->
     <script src="{{ asset('js/index.js') }}"></script>
     <script src="{{ asset('js/navbar.js') }}"></script>
+    @if (Session::has('register'))
+    <script>
+        
+    </script>
+    @elseif (Session::has('password_change'))
+    <script>
+        $("#changepassword_modal").modal('show')
+    </script>
+    @else
     <script>
         let has_login_error = "{{$errors->any()?'true':'false'}}"
         if (has_login_error === "true") {
             $('#login_modal').modal('show');
         }
     </script>
+    @endif
+
     @yield('scripts')
+    
+    
 </body>
 </html>

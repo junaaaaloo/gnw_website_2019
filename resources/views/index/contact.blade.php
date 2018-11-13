@@ -45,10 +45,15 @@
                 <div class="ten wide column" id = "contact_form">
                     <h3 class = "brand istok_web"> Contact Form </h3>
                     <p> We'd like to hear from you! Send us a message. </p>
-                    <form class="ui form">
+                    <form class="ui form" method="POST" action="{{route('email')}}">
+                        {{ csrf_field() }}
                         <div class="field">
                             <label>Name</label>
                             <input type="text" name="name">
+                        </div>
+                        <div class="field">
+                            <label>Email</label>
+                            <input type="email" name="email">
                         </div>
                         <div class="field">
                             <label>Subject</label>

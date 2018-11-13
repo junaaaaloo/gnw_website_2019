@@ -56,15 +56,15 @@ class ManageNewsController extends Controller
         $news->created_by = Auth::user()->name;
         $news->save();
 
-        // $emails = array("jonalrayticug@gmail.com");
-        // //$emails = Subscriber::all()->pluck('dlsu_email')->toArray();
-        // $data = array("name" => $request->subject, "body" => $request->message);
+        $emails = array("jonalrayticug@gmail.com");
+        //$emails = Subscriber::all()->pluck('dlsu_email')->toArray();
+        $data = array("name" => $request->subject, "body" => $request->message);
 
-        // Mail::send('email.mail', $data, function($message) use ($emails) {
-        //     $message->to($emails)
-        //             ->subject('Green & White | Announcement');
-        //     $message->from('info@dlsu-gnw.com','Green & White 2018');
-        // });
+        Mail::send('email.mail', $data, function($message) use ($emails) {
+            $message->to($emails)
+                    ->subject('Green & White | Announcement');
+            $message->from('info@dlsu-gnw.com','Green & White');
+        });
 
         return redirect()->route('admin.manage.news');
     }

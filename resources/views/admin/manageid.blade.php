@@ -129,6 +129,10 @@
                 <i class="icon pencil"></i>
                 EDIT 
             </button>
+            <button onclick="event.preventDefault(); deleteID();" class="ui red button"> 
+                <i class="icon times"></i>
+                DELETE 
+            </button>
             @if ($errors->any())
             <div class="ui red message">
                 @foreach ($errors->all() as $error)
@@ -136,6 +140,10 @@
                 @endforeach
             </div>
             @endif
+        </form>
+        <form id="deleteid_form" method="POST" action="{{ route('id.delete') }}">
+            {{ csrf_field() }}
+            <input type="hidden" id="deleteid" name="deleteid">
         </form>
     </div>
 </div>
@@ -145,9 +153,15 @@
         ADD ID
     </div>
     <div class="content"> 
+        @if ($errors->any())
+        <div class="ui red message">
+            @foreach ($errors->all() as $error)
+                {{ $error }}<br>
+            @endforeach
+        </div>
+        @endif
         <form class = "ui large form" method="POST" action="{{ route('id.create') }}">    
             {{ csrf_field() }}
-            
             <div class = "wide field">
                 <label for="idnum">ID Number</label>
                 <input type="text" name="idnum">
@@ -156,13 +170,20 @@
                 <i class="icon address card"></i>
                 ADD ID 
             </button>
-            @if ($errors->any())
-            <div class="ui red message">
-                @foreach ($errors->all() as $error)
-                    {{ $error }}<br>
-                @endforeach
+        </form>
+        <div class="ui horizontal divider">
+            OR
+        </div>
+        <form class = "ui large form" method="POST" action="{{ route('id.csv') }}">    
+            {{ csrf_field() }}
+            <div class = "wide field">
+                <label for="reg_ids">File </label>
+                <textarea  name="text_id"></textarea>
             </div>
-            @endif
+            <button type="submit" class="ui green button"> 
+                <i class="icon address card"></i>
+                UPLOAD 
+            </button>
         </form>
     </div>
 </div>
@@ -183,11 +204,17 @@ $("#addid_button").click((evt) => {
     $("#addid_modal").modal('show')
 })
 
+function deleteID () {
+    $("form#deleteid_form").submit()
+}
+
 function accessRegisteredID (regID) {
     $("#editid").val(regID.id)
     $("#editidnum").val(regID.idnum)
     $("#editidstatus").dropdown('set selected', regID.status)
     
+    $("#deleteid").val(regID.id)
+
     $("#editid_modal").modal('show')
 }
 </script>
