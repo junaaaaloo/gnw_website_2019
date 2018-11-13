@@ -39,12 +39,7 @@ class ManageAdminController extends Controller
             'position' => $request->position,
         ]);
 
-        $role = $request->role;
-        if($role == "Administrator") {
-            $admin->attachRole('administrator');
-        } else if ($role == "Editor") {
-            $admin->attachRole('editor');
-        }
+        $admin->attachRole($request->role);
 
         return redirect()->route('admin.manage.admin');
     }
@@ -54,8 +49,10 @@ class ManageAdminController extends Controller
         $user->name = $request->name;
         $user->position = $request->position;
         $user->email = $request->email;
-        $user->save();
 
+        $user-> detachRoles(['administrator', 'editor']);
+        $user-> attachRole($request->role);
+        
         return redirect()->route('admin.manage.admin');
     }
 

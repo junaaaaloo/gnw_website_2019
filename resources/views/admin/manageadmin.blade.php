@@ -79,8 +79,8 @@
             <div class="field">
                 <label for="adminrole">Role</label>
                 <select class="ui dropdown" id="addrole" name="role" required>
-                    <option value="Administrator">Administrator</option>
-                    <option value="Editor">Editor</option>
+                    <option value="administrator">Administrator</option>
+                    <option value="editor">Editor</option>
                 </select>
             </div>
             <button type="submit" class="ui green button">
@@ -101,12 +101,12 @@
 <div id = "editadmin_modal" class="ui modal">
     <i class="close icon"></i> 
     <div class = "icon header">                       
-        ADD ADMIN
+        EDIT ADMIN
     </div>
     <div class="content"> 
-        <form class = "ui form" method="POST" action="{{ route('admin.store') }}">    
+        <form class = "ui form" method="POST" action="{{ route('admin.edit') }}">    
             {{ csrf_field() }}
-            <input type="hidden" id="editid" name="idnum" required>
+            <input type="hidden" id="editid" name="id" required>
             <div class="field">
                 <label for="editidnum">ID Number</label>
                 <input type="text" id="editidnum" name="idnum" disabled required>
@@ -141,7 +141,7 @@
             </div>
             <div class="field">
                 <label for="editrole">Role</label>
-                <select class="ui dropdown" id="editrole" name="role" disabled required>
+                <select class="ui dropdown" id="editrole" name="role" required>
                     <option value="administrator">Administrator</option>
                     <option value="editor">Editor</option>
                 </select>
