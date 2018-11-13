@@ -54,7 +54,145 @@
                 <img class = "header brand image" src="{{ asset('img/vertical-logo.png')}}">
             </a>
         </div>
-        @yield('menu.left')
+        @if(Auth::user() && Auth::user()->hasRole('subscriber'))
+        <div id = "subscriber_menu" class="desktop ui dropdown item">
+            <input type="hidden" name="subscriber_menu" value="{{$context or 'submission.basic'}}">
+            <div class = "text"> <i class="icon bars"></i>MENU </div>
+            <i class="dropdown icon"></i>
+            <div class="menu">
+                <a data-value = "subscriber.announcements" class="item"  href="{{ route('home') }}">
+                    <i class="icon home"> </i>
+                    ANNOUNCEMENTS
+                </a>
+                <a data-value = "subscriber.basic_info" class = "item" href="{{ route('sub.basic') }}">
+                    <i class="icon user"></i>
+                    <span>BASIC INFORMATION</span>
+                </a>
+                <a data-value = "subscriber.payment_info" href="{{ route('sub.payment') }}" class = "item">
+                    <i class="icon credit card"></i>
+                    <span>PAYMENT INFORMATION<span>
+                </a>
+                <a data-value = "subscriber.affiliations" href="{{ route('sub.affiliations') }}" class = "item">
+                    <i class="icon star"></i>
+                    <span>AFFILIATIONS</span>
+                </a>
+                <a data-value = "subscriber.writeup" href="{{ route('sub.writeup') }}" class = "item">
+                    <i class="icon pencil"></i>
+                    <span>WRITE UP</span>
+                </a>
+                <!-- <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
+                    <i class="icon calendar check"></i>
+                    <span>SCHEDULE PICTORIAL </span>
+                </a> -->
+            </div>
+        </div>
+        <div class = "menu mobile">
+            <a class="item"  href="{{ route('home') }}">
+                <i class="icon home"> </i>
+                ANNOUNCEMENTS
+            </a>
+            <a class = "item" href="{{ route('sub.basic') }}">
+                <i class="icon user"></i>
+                <span>BASIC INFORMATION</span>
+            </a>
+            <a href="{{ route('sub.payment') }}" class = "item">
+                <i class="icon credit card"></i>
+                <span>PAYMENT INFORMATION<span>
+            </a>
+            <a href="{{ route('sub.affiliations') }}" class = "item">
+                <i class="icon star"></i>
+                <span>AFFILIATIONS</span>
+            </a>
+            <a href="{{ route('sub.writeup') }}" class = "item">
+                <i class="icon pencil"></i>
+                <span>WRITE UP</span>
+            </a>
+            <!-- <a href="{{ route('sched.pictorial') }}" class = "item">
+                <i class="icon calendar check"></i>
+                <span>SCHEDULE PICTORIAL </span>
+            </a> -->
+        </div>
+        @elseif ((Auth::user() && Auth::user()->hasRole('subscriber')) || (Auth::user() && Auth::user()->hasRole('administrator')))
+        <div id = "subscriber_menu" class="desktop ui dropdown item">
+            
+            <input type="hidden" name="subscriber_menu" value="{{$context or 'submission.basic'}}">
+                <div class = "text"> <i class="icon bars"></i>MENU 
+            </div>
+            <i class="dropdown icon"></i>
+            <div class="menu">
+                <a data-value = "admin.home" class="item"  href="{{ route('home') }}">
+                    <i class="icon home"> </i>
+                    HOME
+                </a>
+                <div class="item">
+                    <i class="dropdown icon"></i>
+                    <span class="text">            
+                        <i class="icon users"></i>
+                        <span>SUBSCRIBERS</span>
+                    </span>
+                    <div class="menu">
+                        <a data-value = "admin.manage.subscribers" href="{{ route('admin.manage.subs') }}" class="item"> 
+                            <i class="icon users"></i>
+                            MANAGE SUBSCRIBERS
+                        </a>
+                        <a data-value = "admin.manage.registeredIDs" href="{{ route('admin.manage.regid') }}" class="item"> 
+                            <i class="icon address card"></i>
+                            MANAGE REGISTERED ID
+                        </a>
+                        <a data-value = "admin.manage.payments" href="{{ route('admin.manage.payments') }}" class="item">
+                            <i class="icon credit card"></i>
+                            MANAGE PAYMENT
+                        </a>
+                    </div>
+                </div>
+                <a data-value = "admin.manage.announcements" href="{{ route('admin.manage.news') }}" class="item">  
+                    <i class="icon newspaper"></i>
+                    <span>ANNOUNCEMENTS </span>
+                </a>
+                @if (Auth::user() -> hasRole ("administrator"))
+                <a data-value = "admin.manage.administrators" href="{{ route('admin.manage.admin') }}" class="item">  
+                    <i class="icon user secret"></i>
+                    <span>ADMINISTRATORS </span>
+                </a>
+                @endif
+            </div>
+        </div>
+        @if ($context == "admin.manage.subscribers")
+        @isset($subbie)
+        <div class="desktop item">
+            SUBSCRIBER: {{$subbie->lastname}}, {{$subbie->firstname}}
+        </div>  
+        @endisset
+        @endif
+        <div class = "menu mobile">
+            <a data-value = "admin.home" class="item"  href="{{ route('home') }}">
+                <i class="icon home"> </i>
+                HOME
+            </a>
+            <a data-value = "admin.manage.subscribers" href="{{ route('admin.manage.subs') }}" class="item"> 
+                <i class="icon users"></i>
+                MANAGE SUBSCRIBERS
+            </a>
+            <a data-value = "admin.manage.registeredIDs" href="{{ route('admin.manage.regid') }}" class="item"> 
+                <i class="icon address card"></i>
+                MANAGE REGISTERED ID
+            </a>
+            <a data-value = "admin.manage.payments" href="{{ route('admin.manage.payments') }}" class="item">
+                <i class="icon credit card"></i>
+                MANAGE PAYMENT
+            </a>
+            <a data-value = "admin.manage.announcements" href="{{ route('admin.manage.news') }}" class="item">  
+                <i class="icon newspaper"></i>
+                <span>ANNOUNCEMENTS </span>
+            </a>
+            @if (Auth::user() -> hasRole ("administrator"))
+            <a data-value = "admin.manage.administrators" href="{{ route('admin.manage.admin') }}" class="item">  
+                <i class="icon user secret"></i>
+                <span>ADMINISTRATORS </span>
+            </a>
+            @endif
+        </div>
+        @endif
         <div class="right menu">
             <div class = "mobile menu">
                 <a href="{{ route ('about') }}" class="{{ $context == 'about' ? 'active' : '' }} nav item">    
@@ -74,7 +212,6 @@
                 <i class="icon mobile phone layout"> </i>
                 CONTACT
             </a>
-            @yield('menu.right')
 
             @if(!Auth::user())
             <a id = "login" class="login_button nav item">

@@ -8,66 +8,6 @@
     @yield('substyles')
 @endsection
 
-@section('menu.left')
-<div id = "subscriber_menu" class="desktop ui dropdown item">
-    <input type="hidden" name="subscriber_menu" value="{{$context or 'subscriber.announcements'}}">
-    <div class = "text"> </div>
-    <i class="dropdown icon"></i>
-    <div class="menu">
-        <a data-value = "subscriber.announcements" class="item"  href="{{ route('home') }}">
-            <i class="icon home"> </i>
-            ANNOUNCEMENTS
-        </a>
-        <a data-value = "subscriber.basic_info" class = "item" href="{{ route('sub.basic') }}">
-            <i class="icon user"></i>
-            <span>BASIC INFORMATION</span>
-        </a>
-        <a data-value = "subscriber.payment_info" href="{{ route('sub.payment') }}" class = "item">
-            <i class="icon credit card"></i>
-            <span>PAYMENT INFORMATION<span>
-        </a>
-        <a data-value = "subscriber.affiliations" href="{{ route('sub.affiliations') }}" class = "item">
-            <i class="icon star"></i>
-            <span>AFFILIATIONS</span>
-        </a>
-        <a data-value = "subscriber.writeup" href="{{ route('sub.writeup') }}" class = "item">
-            <i class="icon pencil"></i>
-            <span>WRITE UP</span>
-        </a>
-        <!-- <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
-            <i class="icon calendar check"></i>
-            <span>SCHEDULE PICTORIAL </span>
-        </a> -->
-    </div>
-</div>
-<div class = "menu mobile">
-    <a class="item"  href="{{ route('home') }}">
-        <i class="icon home"> </i>
-        ANNOUNCEMENTS
-    </a>
-    <a class = "item" href="{{ route('sub.basic') }}">
-        <i class="icon user"></i>
-        <span>BASIC INFORMATION</span>
-    </a>
-    <a href="{{ route('sub.payment') }}" class = "item">
-        <i class="icon credit card"></i>
-        <span>PAYMENT INFORMATION<span>
-    </a>
-    <a href="{{ route('sub.affiliations') }}" class = "item">
-        <i class="icon star"></i>
-        <span>AFFILIATIONS</span>
-    </a>
-    <a href="{{ route('sub.writeup') }}" class = "item">
-        <i class="icon pencil"></i>
-        <span>WRITE UP</span>
-    </a>
-    <!-- <a href="{{ route('sched.pictorial') }}" class = "item">
-        <i class="icon calendar check"></i>
-        <span>SCHEDULE PICTORIAL </span>
-    </a> -->
-</div>
-@endsection
-
 @section('content')
 <div class = "ui container">
     @yield('subcontent')
