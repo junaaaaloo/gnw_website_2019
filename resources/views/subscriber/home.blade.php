@@ -16,6 +16,9 @@
     <h2 class = "ui header">
         Announcements
     </h2>
+    @if (!isset($announcements) || $announcements->count() == 0)
+    <h3 class = "ui center"> Welcome Subscriber. Stay tuned for more updates! </h3>
+    @endif
     @foreach ($announcements as $announcement)
     <div id="new-updates" class="ui padded segment">
         <h3 class = "ui compact header">{{ $announcement->subject }}</h3>
