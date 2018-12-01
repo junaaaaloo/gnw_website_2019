@@ -80,10 +80,10 @@
                     <i class="icon pencil"></i>
                     <span>WRITE UP</span>
                 </a>
-                <!-- <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
+                <a data-value = "subscriber.pictorial" href="{{ route('sched.pictorial') }}" class = "item">
                     <i class="icon calendar check"></i>
                     <span>SCHEDULE PICTORIAL </span>
-                </a> -->
+                </a>
             </div>
         </div>
         <div class = "menu mobile">
@@ -107,12 +107,12 @@
                 <i class="icon pencil"></i>
                 <span>WRITE UP</span>
             </a>
-            <!-- <a href="{{ route('sched.pictorial') }}" class = "item">
+            <a href="{{ route('sched.pictorial') }}" class = "item">
                 <i class="icon calendar check"></i>
                 <span>SCHEDULE PICTORIAL </span>
-            </a> -->
+            </a>
         </div>
-        @elseif ((Auth::user() && Auth::user()->hasRole('subscriber')) || (Auth::user() && Auth::user()->hasRole('administrator')))
+        @elseif ((Auth::user() && Auth::user()->hasRole('editor')) || (Auth::user() && Auth::user()->hasRole('administrator')))
         <div id = "subscriber_menu" class="desktop ui dropdown item">
             
             <input type="hidden" name="subscriber_menu" value="{{$context or 'submission.basic'}}">
@@ -142,6 +142,10 @@
                         <a data-value = "admin.manage.payments" href="{{ route('admin.manage.payments') }}" class="item">
                             <i class="icon credit card"></i>
                             MANAGE PAYMENT
+                        </a>
+                        <a data-value = "admin.manage.pictorial" href="{{ route('admin.manage.pictorial') }}" class="item">
+                            <i class="icon calendar"></i>
+                            MANAGE PICTORIAL
                         </a>
                     </div>
                 </div>

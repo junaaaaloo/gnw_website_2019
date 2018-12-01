@@ -114,7 +114,7 @@
                         </div>
                         <div class="field">
                             <div class="ui disabled dropdown selection">
-                                <input type="hidden" name="month" value = "{{ $subbie->bday_day }}">
+                                <input type="hidden" name="day" value = "{{ $subbie->bday_day }}">
                                 <div class="text"> </div>
                                 <i class="dropdown icon"></i>
                                 <div class="menu">

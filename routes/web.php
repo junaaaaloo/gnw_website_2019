@@ -38,9 +38,11 @@ Route::get('/manage/payment', 'Admin\ManagePaymentsController@index')->name('adm
 Route::get('/manage/news', 'Admin\ManageNewsController@index')->name('admin.manage.news');
 Route::get('/manage/admin', 'Admin\ManageAdminController@index')->name('admin.manage.admin');
 
-// Route::get('/manage/pictorial', 'Admin\SchedPictorialController@index')->name('admin.manage.pictorial');
-// Route::post('/reserve/pictorial', 'Admin\SchedPictorialController@schedule')->name('admin.reserve.pictorial');
-// Route::post('/view/timeslot', 'Admin\SchedPictorialController@view')->name('admin.view.timeslot');
+Route::get('/manage/pictorial', 'Admin\ManagePictorialController@index')->name('admin.manage.pictorial');
+Route::post('/manage/pictorial/college', 'Admin\ManagePictorialController@college')->name('admin.manage.college');
+
+Route::post('/reserve/pictorial', 'Admin\ManagePictorialController@schedule')->name('admin.reserve.pictorial');
+Route::post('/view/timeslot', 'Admin\ManagePictorialController@view')->name('admin.view.timeslot');
 
 Route::post('/manage/subscribers/save', 'Admin\ManageSubscribersController@save')->name('admin.subscriber.save');
 
@@ -55,15 +57,14 @@ Route::get('/details', 'Subscriber\BasicInfoController@index')->name('sub.basic'
 Route::get('/payment', 'Subscriber\PaymentController@index')->name('sub.payment');
 Route::get('/affiliations', 'Subscriber\AffiliationsController@index')->name('sub.affiliations');
 Route::get('/writeup', 'Subscriber\WriteUpController@index')->name('sub.writeup');
-Route::get('/pictorial', 'Subscriber\SchedPictorialController@index')->name('sched.pictorial');
+Route::get('/pictorial', 'Subscriber\SchedulePictorialController@index')->name('sched.pictorial');
 
 Route::get('/survey', 'Subscriber\SurveyController@index')->name('survey');
 
 Route::post('/survey/submit', 'Subscriber\SurveyController@submit')->name('survey.submit');
 
-// Route::post('/schedule/pictorial', 'SchedPictorialController@chooseDate')->name('choose.date');
-// Route::post('/schedule/pictorial/reserve', 'SchedPictorialController@reserve')->name('reserve.slot');
-// Route::post('/schedule/pictorial/cancel', 'SchedPictorialController@cancel')->name('cancel.slot');
+Route::post('/schedule/pictorial', 'Subscriber\SchedulePictorialController@schedule')->name('subscriber.schedule');
+Route::post('/schedule/pictorial/cancel', 'Subscriber\SchedulePictorialController@cancel')->name('subscriber.schedule.cancel');
 
 Route::middleware('auth')->post('/password/change', function(Illuminate\Http\Request $request){
 	$user = Illuminate\Support\Facades\Auth::user();
